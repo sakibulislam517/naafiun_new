@@ -11,8 +11,9 @@
 
 <!-- Product Section -->
 <section class="mx-auto max-w-7xl px-4 py-6">
-  <!-- 3-Column Layout: Image | Details | Sidebar -->
-  <div class="grid gap-6 lg:grid-cols-[200px_1fr_260px] xl:grid-cols-[240px_1fr_300px]">
+  <div class="grid gap-6 lg:grid-cols-[1fr_280px] xl:grid-cols-[1fr_320px]">
+    <!-- Left+Center: Image + Product Info -->
+    <div class="grid gap-6 md:grid-cols-[200px_1fr]">
 
     <!-- ===== LEFT: Product Image ===== -->
     <div>
@@ -53,32 +54,32 @@
 
       <!-- Product Meta -->
       <div class="mt-4 space-y-2 text-sm">
-        <div class="flex gap-2">
-          <span class="w-20 shrink-0 font-semibold text-slate-600">লেখক:</span>
+        <div class="flex flex-wrap gap-x-2 gap-y-1">
+          <span class="font-semibold text-slate-600">লেখক:</span>
           <span class="text-slate-900" id="product-author">—</span>
         </div>
-        <div class="flex gap-2">
-          <span class="w-20 shrink-0 font-semibold text-slate-600">বিষয়:</span>
+        <div class="flex flex-wrap gap-x-2 gap-y-1">
+          <span class="font-semibold text-slate-600">বিষয়:</span>
           <span class="text-red-600 font-medium" id="product-category">—</span>
         </div>
-        <div class="flex gap-2">
-          <span class="w-20 shrink-0 font-semibold text-slate-600">প্রকাশনী:</span>
+        <div class="flex flex-wrap gap-x-2 gap-y-1">
+          <span class="font-semibold text-slate-600">প্রকাশনী:</span>
           <span class="text-red-600 font-medium" id="product-publisher">—</span>
         </div>
-        <div class="flex gap-2">
-          <span class="w-20 shrink-0 font-semibold text-slate-600">পৃষ্ঠা:</span>
+        <div class="flex flex-wrap gap-x-2 gap-y-1">
+          <span class="font-semibold text-slate-600">পৃষ্ঠা:</span>
           <span class="text-slate-900" id="detail-pages">—</span>
         </div>
-        <div class="flex gap-2">
-          <span class="w-20 shrink-0 font-semibold text-slate-600">ভাষা:</span>
+        <div class="flex flex-wrap gap-x-2 gap-y-1">
+          <span class="font-semibold text-slate-600">ভাষা:</span>
           <span class="text-slate-900" id="detail-language">বাংলা</span>
         </div>
-        <div class="flex gap-2">
-          <span class="w-20 shrink-0 font-semibold text-slate-600">কভার:</span>
+        <div class="flex flex-wrap gap-x-2 gap-y-1">
+          <span class="font-semibold text-slate-600">কভার:</span>
           <span class="text-slate-900" id="detail-cover">—</span>
         </div>
-        <div class="flex gap-2">
-          <span class="w-20 shrink-0 font-semibold text-slate-600">সংস্করণ:</span>
+        <div class="flex flex-wrap gap-x-2 gap-y-1">
+          <span class="font-semibold text-slate-600">সংস্করণ:</span>
           <span class="text-slate-900">১ম প্রকাশ, ২০২৫</span>
         </div>
       </div>
@@ -96,11 +97,11 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="mt-5 flex flex-wrap gap-3">
-        <button id="detailAddToCart" class="rounded-lg bg-orange-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition focus:outline-none focus:ring-4 focus:ring-orange-500/30" type="button">
+      <div class="mt-5 flex flex-col gap-3 sm:flex-row">
+        <button id="detailAddToCart" class="w-full rounded-lg bg-orange-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition focus:outline-none focus:ring-4 focus:ring-orange-500/30 sm:w-auto" type="button">
           অর্ডার করুন
         </button>
-        <button class="rounded-lg border-2 border-green-600 bg-white px-6 py-2.5 text-sm font-bold text-green-600 hover:bg-green-50 transition" type="button">
+        <button class="w-full rounded-lg border-2 border-green-600 bg-white px-6 py-2.5 text-sm font-bold text-green-600 hover:bg-green-50 transition sm:w-auto" type="button">
           পছন্দের তালিকায় যুক্ত করুন
         </button>
       </div>
@@ -135,7 +136,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </section>
 

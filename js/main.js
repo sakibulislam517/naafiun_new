@@ -28,8 +28,8 @@
           ${p.discount ? `<span class="absolute left-2 top-2 rounded bg-rose-600 px-2 py-1 text-xs font-bold text-white">-${p.discount}%</span>` : ""}
           ${!p.inStock ? `<span class="absolute right-2 top-2 rounded bg-slate-800 px-2 py-1 text-xs font-bold text-white">স্টক আউট</span>` : ""}
         </div>
-        <div class="p-3">
-          <h3 class="line-clamp-2 text-sm font-bold text-slate-900">${p.title}</h3>
+        <div class="p-3 flex flex-col">
+          <h3 class="line-clamp-2 text-sm font-bold text-slate-900 min-h-[2.5rem]">${p.title}</h3>
           <p class="mt-1 text-xs text-slate-500">${p.author}</p>
           <div class="mt-2 flex items-baseline gap-2">
             <p class="text-sm font-extrabold text-slate-900">${formatPrice(p.price)}</p>

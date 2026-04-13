@@ -108,7 +108,7 @@
       void overlay.offsetWidth;
       overlay.classList.add("opacity-100");
       panel.classList.add("translate-x-0");
-      panel.classList.remove("-translate-x-full");
+      panel.classList.remove("translate-x-full");
       document.body.style.overflow = "hidden";
     }
   }
@@ -120,7 +120,7 @@
       overlay.classList.remove("opacity-100");
       overlay.classList.add("opacity-0");
       panel.classList.remove("translate-x-0");
-      panel.classList.add("-translate-x-full");
+      panel.classList.add("translate-x-full");
       setTimeout(() => {
         overlay.classList.add("hidden");
         document.body.style.overflow = "";

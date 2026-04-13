@@ -5,7 +5,7 @@
       <section class="mx-auto max-w-7xl px-4 py-6" aria-label="Hero promotions">
         <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <!-- Fixed hero height (max 250px) -->
-          <div class="relative h-[190px] max-h-[250px] bg-slate-100 sm:h-[220px] md:h-[250px]">
+          <div class="relative h-[160px] max-h-[250px] bg-slate-100 sm:h-[200px] md:h-[250px]">
             <div id="heroTrack" class="flex h-full transition-transform duration-500 ease-out">
             <!-- Slide 1 -->
             <a href="index.php?e=details&slug=${p.slug}" class="block h-full w-full shrink-0" aria-label="Go to delivery charge banner">
@@ -75,7 +75,7 @@
 
       <!-- Featured category blocks (like your screenshot) -->
       <section class="mx-auto max-w-7xl px-4 pb-6">
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div class="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
           <a href="#" class="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:bg-slate-50">
             <span class="grid h-12 w-12 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
               <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -140,7 +140,7 @@
 
       <!-- Service strip -->
       <section class="mx-auto max-w-7xl px-4 pb-8">
-        <div class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm grid-cols-2 lg:grid-cols-4">
           <div class="flex items-start gap-3">
             <span class="mt-0.5 grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
               <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -203,7 +203,7 @@
           <a class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" href="#">সব দেখুন</a>
         </div>
 
-        <div id="popular-grid" class="mt-4 grid gap-3 grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+        <div id="popular-grid" class="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           <!-- Products rendered from JSON -->
         </div>
       </section>
@@ -228,7 +228,7 @@
           <a class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" href="#">সব দেখুন</a>
         </div>
 
-        <div id="newarrival-grid" class="mt-4 grid gap-3 grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+        <div id="newarrival-grid" class="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           <!-- Products rendered from JSON -->
         </div>
       </section>

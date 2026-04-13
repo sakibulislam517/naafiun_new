@@ -3,7 +3,10 @@
     "allow": [
       "WebFetch(www.naafiun.com)",
       "WebSearch",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   },
   "$version": 3
