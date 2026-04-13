@@ -117,9 +117,9 @@
           <p class="text-xl font-black text-slate-900" id="cartTotal">৳ ০</p>
         </div>
         <p class="mt-1 text-xs text-slate-500">ডেলিভারি চার্জ আলাদা</p>
-        <button id="cartCheckoutBtn" type="button" class="mt-4 w-full rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
+        <a href="checkout" id="cartCheckoutBtn" type="button" class="mt-4 block w-full rounded-xl bg-emerald-600 px-5 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
           চেকআউট করুন
-        </button>
+        </a>
       </div>
     </div>
 
