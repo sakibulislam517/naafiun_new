@@ -133,7 +133,7 @@
     <div class="hidden lg:block">
       <div class="sticky top-24">
         <h2 class="text-sm font-bold text-slate-900 border-b border-slate-200 pb-2">আরো দেখুন</h2>
-        <div class="mt-3 space-y-2.5 max-h-[80vh] overflow-y-auto pr-1" id="related-products" style="scrollbar-width: thin;">
+        <div class="mt-3 space-y-2.5  pr-1" id="related-products" style="scrollbar-width: thin;">
           <!-- Related products loaded dynamically -->
         </div>
       </div>
