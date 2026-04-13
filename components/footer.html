@@ -1,0 +1,87 @@
+<!-- Reusable footer partial -->
+<footer class="border-t border-slate-200 bg-white">
+  <div class="mx-auto max-w-7xl px-4 py-12">
+    <div class="grid gap-10 md:grid-cols-4">
+      <div class="md:col-span-1">
+        <a class="flex items-center gap-2" href="../index.html" aria-label="Naafiun home">
+          <span class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-600 text-white">
+            <span class="text-lg font-black">N</span>
+          </span>
+          <div class="leading-tight">
+            <p class="text-base font-bold text-slate-900">Naafiun</p>
+            <p class="text-xs text-slate-500">Islamic books & gifts</p>
+          </div>
+        </a>
+        <p class="mt-4 text-sm leading-6 text-slate-600">
+          A clean static UI you can later wire into PHP/Laravel. All content here is dummy placeholder data.
+        </p>
+        <div class="mt-4 flex gap-3">
+          <a class="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-50" href="#" aria-label="Facebook">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M13.5 22v-8h2.7l.5-3H13.5V9.1c0-.8.3-1.4 1.5-1.4H16.9V5.1c-.3 0-1.3-.1-2.4-.1-2.5 0-4.2 1.5-4.2 4.3V11H7.7v3h2.6v8h3.2Z"/>
+            </svg>
+          </a>
+          <a class="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-50" href="#" aria-label="YouTube">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M21.6 7.2a3 3 0 0 0-2.1-2.1C17.7 4.6 12 4.6 12 4.6s-5.7 0-7.5.5A3 3 0 0 0 2.4 7.2 31 31 0 0 0 2 12a31 31 0 0 0 .4 4.8 3 3 0 0 0 2.1 2.1c1.8.5 7.5.5 7.5.5s5.7 0 7.5-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 22 12a31 31 0 0 0-.4-4.8ZM10 15.5v-7l6 3.5-6 3.5Z"/>
+            </svg>
+          </a>
+          <a class="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-50" href="#" aria-label="Instagram">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M7.5 2h9A5.5 5.5 0 0 1 22 7.5v9A5.5 5.5 0 0 1 16.5 22h-9A5.5 5.5 0 0 1 2 16.5v-9A5.5 5.5 0 0 1 7.5 2Zm9 2h-9A3.5 3.5 0 0 0 4 7.5v9A3.5 3.5 0 0 0 7.5 20h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 16.5 4ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm5.5-2.4a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Z"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-sm font-bold text-slate-900">Shop</h2>
+        <ul class="mt-4 space-y-2 text-sm">
+          <li><a class="text-slate-600 hover:text-slate-900" href="#categories">Categories</a></li>
+          <li><a class="text-slate-600 hover:text-slate-900" href="#new">New Arrivals</a></li>
+          <li><a class="text-slate-600 hover:text-slate-900" href="#trending">Trending</a></li>
+          <li><a class="text-slate-600 hover:text-slate-900" href="#bundles">Bundles</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-sm font-bold text-slate-900">Customer care</h2>
+        <ul class="mt-4 space-y-2 text-sm">
+          <li><a class="text-slate-600 hover:text-slate-900" href="#">Track Order</a></li>
+          <li><a class="text-slate-600 hover:text-slate-900" href="#">Shipping & Delivery</a></li>
+          <li><a class="text-slate-600 hover:text-slate-900" href="#">Returns & Refunds</a></li>
+          <li><a class="text-slate-600 hover:text-slate-900" href="#">Privacy Policy</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-sm font-bold text-slate-900">Newsletter</h2>
+        <p class="mt-4 text-sm text-slate-600">Get updates on new books and offers (dummy form).</p>
+        <form class="mt-4 flex gap-2" action="#" method="post">
+          <label class="sr-only" for="newsletterEmail">Email</label>
+          <input
+            id="newsletterEmail"
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-emerald-600/20 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-4"
+          />
+          <button class="shrink-0 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-600/30" type="submit">
+            Join
+          </button>
+        </form>
+        <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p class="text-sm font-semibold text-slate-900">Support</p>
+          <p class="mt-1 text-sm text-slate-600">Call: +880 1X-XXXX-XXXX</p>
+          <p class="text-sm text-slate-600">Email: support@example.com</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-10 flex flex-col gap-3 border-t border-slate-200 pt-6 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+      <p>© <span id="year"></span> Naafiun. Static UI demo.</p>
+      <p class="text-slate-500">Built with HTML + Tailwind CDN.</p>
+    </div>
+  </div>
+</footer>
+

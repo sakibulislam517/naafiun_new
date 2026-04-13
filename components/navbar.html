@@ -1,0 +1,120 @@
+<!--
+  Reusable navbar partial.
+  In Laravel, you can move this into `resources/views/components/navbar.blade.php`
+  and include it with `@include(...)` or as a Blade component.
+-->
+<header class="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
+  <!-- Top bar -->
+  <div class="bg-slate-900 text-slate-100">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 text-sm">
+      <p class="truncate">Free delivery in Dhaka on orders over ৳999</p>
+      <div class="hidden items-center gap-4 sm:flex">
+        <a class="hover:text-white" href="#">Help</a>
+        <a class="hover:text-white" href="#">Track Order</a>
+        <a class="hover:text-white" href="#">Sign In</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main navbar -->
+  <div class="mx-auto max-w-7xl px-4 py-4">
+    <div class="flex items-center justify-between gap-4">
+      <!-- Brand -->
+      <a class="flex items-center gap-2" href="../index.html" aria-label="Naafiun home">
+        <span class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-600 text-white">
+          <span class="text-lg font-black">N</span>
+        </span>
+        <div class="leading-tight">
+          <p class="text-base font-bold text-slate-900">Naafiun</p>
+          <p class="text-xs text-slate-500">Islamic books & gifts</p>
+        </div>
+      </a>
+
+      <!-- Search -->
+      <form class="hidden w-full max-w-2xl md:block" action="#" method="get" role="search">
+        <label class="sr-only" for="q">Search</label>
+        <div class="relative">
+          <input
+            id="q"
+            name="q"
+            placeholder="Search by book, author, publisher…"
+            class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pr-28 text-sm text-slate-900 shadow-sm outline-none ring-emerald-600/20 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-4"
+            type="search"
+          />
+          <button
+            class="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-600/30"
+            type="submit"
+          >
+            Search
+          </button>
+        </div>
+      </form>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-2">
+        <a class="hidden rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:inline-flex" href="#">
+          Wishlist
+        </a>
+        <a class="relative inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800" href="#">
+          <span>Cart</span>
+          <span class="grid h-6 w-6 place-items-center rounded-full bg-white/15 text-xs">2</span>
+        </a>
+        <button
+          id="mobileMenuBtn"
+          class="inline-flex items-center justify-center rounded-xl border border-slate-200 p-2 text-slate-700 hover:bg-slate-50 md:hidden"
+          type="button"
+          aria-controls="mobileMenu"
+          aria-expanded="false"
+        >
+          <span class="sr-only">Open menu</span>
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Category nav -->
+    <nav class="mt-4 hidden items-center justify-between gap-4 md:flex" aria-label="Primary">
+      <div class="flex flex-wrap items-center gap-2">
+        <a class="rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100" href="#categories">Categories</a>
+        <a class="rounded-full px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100" href="#trending">Trending</a>
+        <a class="rounded-full px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100" href="#new">New Arrivals</a>
+        <a class="rounded-full px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100" href="#bundles">Bundles</a>
+        <a class="rounded-full px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100" href="#publishers">Publishers</a>
+      </div>
+      <div class="flex items-center gap-2 text-sm">
+        <a class="font-medium text-slate-600 hover:text-slate-900" href="#">Contact</a>
+        <span class="text-slate-300">|</span>
+        <a class="font-medium text-slate-600 hover:text-slate-900" href="#">About</a>
+      </div>
+    </nav>
+
+    <!-- Mobile menu -->
+    <div id="mobileMenu" class="mt-4 hidden md:hidden">
+      <form class="mb-3" action="#" method="get" role="search">
+        <label class="sr-only" for="q_mobile">Search</label>
+        <input
+          id="q_mobile"
+          name="q"
+          placeholder="Search by book, author, publisher…"
+          class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none ring-emerald-600/20 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-4"
+          type="search"
+        />
+      </form>
+      <nav class="grid gap-2 rounded-2xl border border-slate-200 bg-white p-3" aria-label="Mobile">
+        <a class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50" href="#categories">Categories</a>
+        <a class="rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" href="#trending">Trending</a>
+        <a class="rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" href="#new">New Arrivals</a>
+        <a class="rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" href="#bundles">Bundles</a>
+        <a class="rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" href="#publishers">Publishers</a>
+        <div class="mt-1 border-t border-slate-200 pt-2">
+          <a class="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" href="#">Help</a>
+          <a class="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" href="#">Track Order</a>
+          <a class="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" href="#">Sign In</a>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
