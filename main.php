@@ -18,10 +18,10 @@ if (file_exists($envPath)) {
 }
 
 $host = isset($_SERVER['HTTP_HOST']) ? strtolower((string)$_SERVER['HTTP_HOST']) : '';
-$isLocalHost = strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false;
+$isLocalHost = strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false || strpos($host, '.test') !== false;
 
 $domainValue = $isLocalHost
-    ? ($env['LOCAL_DOMAIN'] ?? 'http://localhost/naafiun/naafiun_new/')
+    ? ($env['LOCAL_DOMAIN'] ?? 'https://naafiun_new.test/')
     : ($env['DOMAIN'] ?? 'https://naafiun.hikmatech.com/demo/');
 
 $dbNameValue = $isLocalHost
@@ -36,11 +36,15 @@ $dbPassValue = $isLocalHost
     ? ($env['LOCAL_DB_PASS'] ?? '')
     : ($env['DB_PASS'] ?? '');
 
+$googleClientIdValue = $isLocalHost
+    ? ($env['LOCAL_GOOGLE_CLIENT_ID'] ?? ($env['GOOGLE_CLIENT_ID'] ?? ''))
+    : ($env['GOOGLE_CLIENT_ID'] ?? '');
+
 define('domain', $domainValue);
 define('DB_NAME', $dbNameValue);
 define('DB_USER', $dbUserValue);
 define('DB_PASS', $dbPassValue);
-define('GOOGLE_CLIENT_ID', $env['GOOGLE_CLIENT_ID'] ?? '');
+define('GOOGLE_CLIENT_ID', $googleClientIdValue);
 define('FACEBOOK_APP_ID', $env['FACEBOOK_APP_ID'] ?? '');
 define('FACEBOOK_APP_SECRET', $env['FACEBOOK_APP_SECRET'] ?? '');
 

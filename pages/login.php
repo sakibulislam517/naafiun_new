@@ -118,13 +118,21 @@ if ($db->is_customer()) {
           <!-- Phone -->
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1.5">ফোন নম্বর</label>
-            <input
-              type="tel"
-              name="phone"
-              placeholder="01XXXXXXXXX"
-              class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition"
-              required
-            />
+            <div class="flex items-center rounded-xl border border-slate-300 bg-white focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition">
+              <span class="px-4 py-3 text-sm font-medium text-slate-600 border-r border-slate-200">+880</span>
+              <input
+                type="tel"
+                inputmode="numeric"
+                pattern="[0-9]{10}"
+                maxlength="10"
+                name="phone"
+                placeholder="1XXXXXXXXX"
+                class="w-full rounded-r-xl bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                required
+              />
+            </div>
+            <p class="mt-1 text-xs text-slate-500">+880 এর পরে ১০ ডিজিট দিন (মোট ১১ ডিজিট)।</p>
           </div>
 
           <!-- Address -->
@@ -318,43 +326,64 @@ if ($db->is_customer()) {
   const loginAlert = document.getElementById('loginAlert');
   const signupAlert = document.getElementById('signupAlert');
   const socialButtons = document.querySelectorAll('[data-social]');
+  let isGoogleInitialized = false;
 
-  function loginViaGoogle() {
-    if (!GOOGLE_CLIENT_ID || !window.google || !google.accounts || !google.accounts.id) {
-      showToast('Google login এখন কনফিগার করা নেই।', 'error');
+  function handleGoogleCredential(response) {
+    if (!response || !response.credential) {
+      showToast('Google login ব্যর্থ হয়েছে।', 'error');
       return;
+    }
+
+    $.ajax({
+      url: 'ajax.php',
+      method: 'POST',
+      dataType: 'json',
+      data: {
+        action: 'google_login',
+        id_token: response.credential
+      },
+      success: function(res) {
+        const ok = !!(res && parseInt(res.status, 10) === 1);
+        showToast((res && res.message) ? res.message : 'অনুরোধ সম্পন্ন হয়েছে।', ok ? 'success' : 'error');
+        if (ok) {
+          setTimeout(function() {
+            window.location.href = '<?php echo domain; ?>';
+          }, 600);
+        }
+      },
+      error: function() {
+        showToast('সার্ভার সমস্যা হয়েছে। আবার চেষ্টা করুন।', 'error');
+      }
+    });
+  }
+
+  function ensureGoogleInitialized() {
+    if (isGoogleInitialized) {
+      return true;
+    }
+    if (!window.google || !google.accounts || !google.accounts.id) {
+      return false;
     }
 
     google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
-      callback: function(response) {
-        if (!response || !response.credential) {
-          showToast('Google login ব্যর্থ হয়েছে।', 'error');
-          return;
-        }
-        $.ajax({
-          url: 'ajax.php',
-          method: 'POST',
-          dataType: 'json',
-          data: {
-            action: 'google_login',
-            id_token: response.credential
-          },
-          success: function(res) {
-            const ok = !!(res && parseInt(res.status, 10) === 1);
-            showToast((res && res.message) ? res.message : 'অনুরোধ সম্পন্ন হয়েছে।', ok ? 'success' : 'error');
-            if (ok) {
-              setTimeout(function() {
-                window.location.href = '<?php echo domain; ?>';
-              }, 600);
-            }
-          },
-          error: function() {
-            showToast('সার্ভার সমস্যা হয়েছে। আবার চেষ্টা করুন।', 'error');
-          }
-        });
-      }
+      callback: handleGoogleCredential
     });
+    isGoogleInitialized = true;
+    return true;
+  }
+
+  function loginViaGoogle() {
+    if (!GOOGLE_CLIENT_ID) {
+      showToast('Google login এখন কনফিগার করা নেই।', 'error');
+      return;
+    }
+
+    if (!ensureGoogleInitialized()) {
+      showToast('Google SDK load হয়নি। আবার চেষ্টা করুন।', 'error');
+      return;
+    }
+
     google.accounts.id.prompt();
   }
 
@@ -450,6 +479,18 @@ if ($db->is_customer()) {
 
       const pass = document.getElementById('signupPassword').value;
       const confirmPass = document.getElementById('signupConfirm').value;
+      const phoneInput = this.querySelector('input[name="phone"]');
+      const phoneDigits = phoneInput ? phoneInput.value.replace(/[^0-9]/g, '') : '';
+
+      if (phoneInput) {
+        phoneInput.value = phoneDigits;
+      }
+
+      if (!/^[0-9]{10}$/.test(phoneDigits)) {
+        showAlert(signupAlert, 'ফোন নম্বর +880 এর পরে ১০ ডিজিট দিতে হবে।', false);
+        return;
+      }
+
       if (pass !== confirmPass) {
         showAlert(signupAlert, 'পাসওয়ার্ড মিলেনি।', false);
         return;

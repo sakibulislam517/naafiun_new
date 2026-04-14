@@ -311,7 +311,7 @@
             'is_active' => true,
           ],
           [
-            'href' => 'category',
+            'href' => 'books',
             'label' => 'বই',
             'icon' => 'book',
           ],

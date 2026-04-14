@@ -119,19 +119,26 @@ if ($action == 'customer_signup') {
 
     $name = isset($_POST['full_name']) ? trim($_POST['full_name']) : '';
     $email = isset($_POST['email']) ? trim(strtolower($_POST['email'])) : '';
-    $phone = isset($_POST['phone']) ? trim($_POST['phone']) : '';
+    $phoneInput = isset($_POST['phone']) ? trim((string)$_POST['phone']) : '';
+    $phoneInput = preg_replace('/[^0-9]/', '', $phoneInput);
+    $phone = '0' . $phoneInput;
     $address = isset($_POST['address']) ? trim($_POST['address']) : '';
     $password = isset($_POST['password']) ? (string)$_POST['password'] : '';
     $confirmPassword = isset($_POST['confirm_password']) ? (string)$_POST['confirm_password'] : '';
     $terms = isset($_POST['terms']) ? 1 : 0;
 
-    if ($name === '' || $email === '' || $phone === '' || $password === '' || $confirmPassword === '') {
+    if ($name === '' || $email === '' || $phoneInput === '' || $password === '' || $confirmPassword === '') {
         echo json_encode(['status' => 0, 'message' => 'সব প্রয়োজনীয় তথ্য পূরণ করুন।']);
         exit;
     }
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         echo json_encode(['status' => 0, 'message' => 'সঠিক ইমেইল দিন।']);
+        exit;
+    }
+
+    if (!preg_match('/^[0-9]{10}$/', $phoneInput)) {
+        echo json_encode(['status' => 0, 'message' => 'ফোন নম্বর +880 এর পরে ১০ ডিজিট দিতে হবে।']);
         exit;
     }
 
