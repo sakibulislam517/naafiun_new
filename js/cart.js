@@ -302,6 +302,33 @@
     }, 3000);
   }
 
+  async function addToCartAjax(product, qty = 1) {
+    const payload = new URLSearchParams();
+    payload.append("action", "add_to_cart");
+    payload.append("product_id", String(product.id));
+    payload.append("qty", String(qty));
+    payload.append("title", product.title || "");
+
+    const res = await fetch("ajax.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      },
+      body: payload.toString(),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to sync cart");
+    }
+
+    const data = await res.json();
+    if (!data || Number(data.status) !== 1) {
+      throw new Error((data && data.message) || "Cart add failed");
+    }
+
+    return data;
+  }
+
   // ---------- Event Listeners ----------
   function initEventListeners() {
     // Cart trigger button
@@ -375,22 +402,28 @@
         // Fly animation
         flyToCartAnimation(addBtn, product);
 
-        // Add to cart after animation starts
-        setTimeout(() => {
-          addToCart(product, 1);
-          showToast(`${product.title} added to cart`, "success");
+        // Add to cart after animation starts and ajax success
+        setTimeout(async () => {
+          try {
+            await addToCartAjax(product, 1);
+            addToCart(product, 1);
+            showToast(`${product.title} added to cart`, "success");
 
-          // Button feedback
-          const originalText = addBtn.textContent;
-          addBtn.textContent = "✓ Added!";
-          addBtn.classList.add("bg-emerald-700");
-          addBtn.disabled = true;
+            // Button feedback
+            const originalText = addBtn.textContent;
+            addBtn.textContent = "✓ Added!";
+            addBtn.classList.add("bg-emerald-700");
+            addBtn.disabled = true;
 
-          setTimeout(() => {
-            addBtn.textContent = originalText;
-            addBtn.classList.remove("bg-emerald-700");
-            addBtn.disabled = false;
-          }, 1500);
+            setTimeout(() => {
+              addBtn.textContent = originalText;
+              addBtn.classList.remove("bg-emerald-700");
+              addBtn.disabled = false;
+            }, 1500);
+          } catch (err) {
+            console.error("[Cart] Add ajax error:", err);
+            showToast("Failed to add item to cart", "error");
+          }
         }, 200);
       }
 
@@ -455,26 +488,32 @@
             }
           }
 
-          setTimeout(() => {
-            addToCart(product, qty);
-            showToast(`${product.title} (x${qty}) added to cart`, "success");
+          setTimeout(async () => {
+            try {
+              await addToCartAjax(product, qty);
+              addToCart(product, qty);
+              showToast(`${product.title} (x${qty}) added to cart`, "success");
 
-            // Button feedback
-            const originalText = detailAddBtn.textContent;
-            detailAddBtn.innerHTML = `
-              <svg class="inline-block h-4 w-4" viewBox="0 0 24 24" fill="none">
-                <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              Added!
-            `;
-            detailAddBtn.classList.add("bg-emerald-700");
-            detailAddBtn.disabled = true;
+              // Button feedback
+              const originalText = detailAddBtn.textContent;
+              detailAddBtn.innerHTML = `
+                <svg class="inline-block h-4 w-4" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Added!
+              `;
+              detailAddBtn.classList.add("bg-emerald-700");
+              detailAddBtn.disabled = true;
 
-            setTimeout(() => {
-              detailAddBtn.textContent = originalText;
-              detailAddBtn.classList.remove("bg-emerald-700");
-              detailAddBtn.disabled = false;
-            }, 2000);
+              setTimeout(() => {
+                detailAddBtn.textContent = originalText;
+                detailAddBtn.classList.remove("bg-emerald-700");
+                detailAddBtn.disabled = false;
+              }, 2000);
+            } catch (err) {
+              console.error("[Cart] Add ajax error:", err);
+              showToast("Failed to add item to cart", "error");
+            }
           }, 200);
         } catch (err) {
           console.error("[Cart] Error:", err);

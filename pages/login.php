@@ -1,17 +1,11 @@
+<?php
+if ($db->is_customer()) {
+  $db->redirect(domain);
+}
+?>
 <!-- Login / Signup Page -->
 <main class="min-h-[calc(100vh-200px)] bg-gradient-to-br from-emerald-50 via-white to-slate-50">
   <div class="mx-auto max-w-md px-4 py-8 sm:py-12">
-
-    <!-- Back link -->
-    <a href="<?php echo domain; ?>" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-emerald-600 transition mb-6">
-      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      হোমে ফিরুন
-    </a>
-
-    <!-- Logo -->
-    <div class="flex justify-center mb-6">
-      <img src="assets/images/naafiun.webp" alt="Naafiun" class="h-10 w-auto" />
-    </div>
 
     <!-- Card -->
     <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -24,7 +18,9 @@
 
       <!-- ===== LOGIN FORM ===== -->
       <div id="loginForm" class="p-6">
-        <form action="#" method="post" class="space-y-4">
+        <div id="loginAlert" class="hidden mb-4 rounded-lg border px-4 py-3 text-sm"></div>
+        <form id="customerLoginForm" action="#" method="post" class="space-y-4">
+          <input type="hidden" name="action" value="customer_login" />
           <!-- Email / Phone -->
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1.5">ইমেইল বা ফোন নম্বর</label>
@@ -79,11 +75,11 @@
 
         <!-- Social Login -->
         <div class="space-y-3">
-          <button type="button" class="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+          <button type="button" data-social="google" class="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
             <svg class="h-5 w-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
             Google দিয়ে লগইন
           </button>
-          <button type="button" class="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+          <button type="button" data-social="facebook" class="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
             <svg class="h-5 w-5" fill="#1877F2" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
             Facebook দিয়ে লগইন
           </button>
@@ -92,7 +88,9 @@
 
       <!-- ===== SIGNUP FORM ===== -->
       <div id="signupForm" class="hidden p-6">
-        <form action="#" method="post" class="space-y-4">
+        <div id="signupAlert" class="hidden mb-4 rounded-lg border px-4 py-3 text-sm"></div>
+        <form id="customerSignupForm" action="#" method="post" class="space-y-4">
+          <input type="hidden" name="action" value="customer_signup" />
           <!-- Full Name -->
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1.5">পুরো নাম</label>
@@ -127,6 +125,18 @@
               class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition"
               required
             />
+          </div>
+
+          <!-- Address -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">ঠিকানা</label>
+            <textarea
+              name="address"
+              rows="2"
+              placeholder="আপনার ঠিকানা লিখুন"
+              class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition"
+              
+            ></textarea>
           </div>
 
           <!-- Password -->
@@ -189,11 +199,11 @@
 
         <!-- Social Signup -->
         <div class="space-y-3">
-          <button type="button" class="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+          <button type="button" data-social="google" class="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
             <svg class="h-5 w-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
             Google দিয়ে সাইনআপ
           </button>
-          <button type="button" class="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+          <button type="button" data-social="facebook" class="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
             <svg class="h-5 w-5" fill="#1877F2" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
             Facebook দিয়ে সাইনআপ
           </button>
@@ -208,9 +218,15 @@
     </p>
   </div>
 </main>
+<div id="toastContainer" class="pointer-events-none fixed right-4 top-4 z-[100] flex w-full max-w-xs flex-col gap-2"></div>
 
+<script async defer src="https://connect.facebook.net/en_US/sdk.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 (function() {
+  const GOOGLE_CLIENT_ID = '<?php echo htmlspecialchars(GOOGLE_CLIENT_ID, ENT_QUOTES, 'UTF-8'); ?>';
+  const FACEBOOK_APP_ID = '<?php echo htmlspecialchars(FACEBOOK_APP_ID, ENT_QUOTES, 'UTF-8'); ?>';
+
   // Tab switching
   const tabLogin = document.getElementById('tabLogin');
   const tabSignup = document.getElementById('tabSignup');
@@ -253,5 +269,212 @@
       }
     });
   });
+
+  function showAlert(el, message, isSuccess) {
+    const successClass = 'border-emerald-200 bg-emerald-50 text-emerald-700';
+    const errorClass = 'border-red-200 bg-red-50 text-red-700';
+    el.classList.remove('hidden', ...successClass.split(' '), ...errorClass.split(' '));
+    el.classList.add(...(isSuccess ? successClass : errorClass).split(' '));
+    el.textContent = message;
+  }
+
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toastContainer');
+    if (!toast) return;
+
+    const toastEl = document.createElement('div');
+    const bgColor = type === 'success' ? 'bg-emerald-600' : 'bg-rose-600';
+    const icon = type === 'success'
+      ? `<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+           <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+           <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+         </svg>`
+      : `<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+           <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+         </svg>`;
+
+    toastEl.className = `pointer-events-auto flex items-center gap-3 rounded-xl ${bgColor} px-4 py-3 text-sm font-medium text-white shadow-lg`;
+    toastEl.style.opacity = '0';
+    toastEl.style.transform = 'translateY(-10px)';
+    toastEl.style.transition = 'all 0.3s ease';
+    toastEl.innerHTML = `${icon}<span>${message}</span>`;
+
+    toast.appendChild(toastEl);
+
+    requestAnimationFrame(() => {
+      toastEl.style.opacity = '1';
+      toastEl.style.transform = 'translateY(0)';
+    });
+
+    setTimeout(() => {
+      toastEl.style.opacity = '0';
+      toastEl.style.transform = 'translateY(-10px)';
+      setTimeout(() => toastEl.remove(), 300);
+    }, 3000);
+  }
+
+  const loginFormEl = document.getElementById('customerLoginForm');
+  const signupFormEl = document.getElementById('customerSignupForm');
+  const loginAlert = document.getElementById('loginAlert');
+  const signupAlert = document.getElementById('signupAlert');
+  const socialButtons = document.querySelectorAll('[data-social]');
+
+  function loginViaGoogle() {
+    if (!GOOGLE_CLIENT_ID || !window.google || !google.accounts || !google.accounts.id) {
+      showToast('Google login এখন কনফিগার করা নেই।', 'error');
+      return;
+    }
+
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: function(response) {
+        if (!response || !response.credential) {
+          showToast('Google login ব্যর্থ হয়েছে।', 'error');
+          return;
+        }
+        $.ajax({
+          url: 'ajax.php',
+          method: 'POST',
+          dataType: 'json',
+          data: {
+            action: 'google_login',
+            id_token: response.credential
+          },
+          success: function(res) {
+            const ok = !!(res && parseInt(res.status, 10) === 1);
+            showToast((res && res.message) ? res.message : 'অনুরোধ সম্পন্ন হয়েছে।', ok ? 'success' : 'error');
+            if (ok) {
+              setTimeout(function() {
+                window.location.href = '<?php echo domain; ?>';
+              }, 600);
+            }
+          },
+          error: function() {
+            showToast('সার্ভার সমস্যা হয়েছে। আবার চেষ্টা করুন।', 'error');
+          }
+        });
+      }
+    });
+    google.accounts.id.prompt();
+  }
+
+  function loginViaFacebook() {
+    if (!FACEBOOK_APP_ID || !window.FB) {
+      showToast('Facebook login এখন কনফিগার করা নেই।', 'error');
+      return;
+    }
+
+    FB.login(function(response) {
+      if (!response || !response.authResponse || !response.authResponse.accessToken) {
+        showToast('Facebook login বাতিল হয়েছে।', 'error');
+        return;
+      }
+
+      $.ajax({
+        url: 'ajax.php',
+        method: 'POST',
+        dataType: 'json',
+        data: {
+          action: 'facebook_login',
+          access_token: response.authResponse.accessToken
+        },
+        success: function(res) {
+          const ok = !!(res && parseInt(res.status, 10) === 1);
+          showToast((res && res.message) ? res.message : 'অনুরোধ সম্পন্ন হয়েছে।', ok ? 'success' : 'error');
+          if (ok) {
+            setTimeout(function() {
+              window.location.href = '<?php echo domain; ?>';
+            }, 600);
+          }
+        },
+        error: function() {
+          showToast('সার্ভার সমস্যা হয়েছে। আবার চেষ্টা করুন।', 'error');
+        }
+      });
+    }, { scope: 'email,public_profile' });
+  }
+
+  if (FACEBOOK_APP_ID) {
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId: FACEBOOK_APP_ID,
+        cookie: true,
+        xfbml: false,
+        version: 'v19.0'
+      });
+    };
+  }
+
+  socialButtons.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const provider = this.getAttribute('data-social');
+      if (provider === 'google') {
+        loginViaGoogle();
+      } else if (provider === 'facebook') {
+        loginViaFacebook();
+      }
+    });
+  });
+
+  if (loginFormEl) {
+    loginFormEl.addEventListener('submit', function(e) {
+      e.preventDefault();
+      loginAlert.classList.add('hidden');
+
+      $.ajax({
+        url: 'ajax.php',
+        method: 'POST',
+        dataType: 'json',
+        data: $(this).serialize(),
+        success: function(res) {
+          const ok = !!(res && parseInt(res.status, 10) === 1);
+          showAlert(loginAlert, (res && res.message) ? res.message : 'অনুরোধ সম্পন্ন হয়েছে।', ok);
+          if (ok) {
+            showToast('লগইন সফল হয়েছে', 'success');
+            setTimeout(function() {
+              window.location.href = '<?php echo domain; ?>';
+            }, 600);
+          }
+        },
+        error: function() {
+          showAlert(loginAlert, 'সার্ভার সমস্যা হয়েছে। আবার চেষ্টা করুন।', false);
+        }
+      });
+    });
+  }
+
+  if (signupFormEl) {
+    signupFormEl.addEventListener('submit', function(e) {
+      e.preventDefault();
+      signupAlert.classList.add('hidden');
+
+      const pass = document.getElementById('signupPassword').value;
+      const confirmPass = document.getElementById('signupConfirm').value;
+      if (pass !== confirmPass) {
+        showAlert(signupAlert, 'পাসওয়ার্ড মিলেনি।', false);
+        return;
+      }
+
+      $.ajax({
+        url: 'ajax.php',
+        method: 'POST',
+        dataType: 'json',
+        data: $(this).serialize(),
+        success: function(res) {
+          const ok = !!(res && parseInt(res.status, 10) === 1);
+          showAlert(signupAlert, (res && res.message) ? res.message : 'অনুরোধ সম্পন্ন হয়েছে।', ok);
+          if (ok) {
+            showToast('সাইনআপ সফল হয়েছে', 'success');
+            setTimeout(function() {
+              window.location.href = '<?php echo domain; ?>';
+            }, 700);
+          }
+        },
+        error: function() {
+          showAlert(signupAlert, 'সার্ভার সমস্যা হয়েছে। আবার চেষ্টা করুন।', false);
+        }
+      });
+    });
+  }
 })();
 </script>
