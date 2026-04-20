@@ -193,45 +193,140 @@
         </div>
       </section>
 
-      <!-- Product section template (reused) -->
+
+      <?php foreach ($db->getdata("SELECT * FROM subject WHERE home_status = 1") as $subject): ?>
+      <?php
+        $sliderId = "subject-slider-" . (int)$subject['id'];
+        $sql = "SELECT p.* FROM product p 
+          WHERE p.id > 0 AND FIND_IN_SET({$subject['id']}, p.subject) ORDER BY p.id DESC LIMIT 0, 15";
+        $products = $db->getdata($sql);
+      ?>
       <section class="mx-auto max-w-7xl px-4 pb-10">
-        <div class="flex items-end justify-between gap-4">
+        <div class="flex items-center justify-between gap-3">
           <div>
-            <h2 class="text-lg font-black text-slate-900 sm:text-xl">জনপ্রিয় বই</h2>
-            <p class="mt-1 text-sm text-slate-600">ডেমো কনটেন্ট • আপনার স্ক্রিনশটের মতো সেকশন লেআউট</p>
+            <h2 class="relative inline-block text-xl font-black text-slate-900 sm:text-2xl">
+              <?php echo $subject['name']; ?>
+              <span class="mt-1 block h-1 w-16 rounded-full bg-gradient-to-r from-emerald-500 to-sky-500"></span>
+            </h2>
           </div>
-          <a class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" href="#">সব দেখুন</a>
+          <div class="flex items-center gap-2">
+            <button type="button" class="subject-slider-btn rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm hover:bg-slate-50" data-slider-target="<?php echo $sliderId; ?>" data-direction="left" aria-label="Scroll left">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M15 6 9 12l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <button type="button" class="subject-slider-btn rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm hover:bg-slate-50" data-slider-target="<?php echo $sliderId; ?>" data-direction="right" aria-label="Scroll right">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <a class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" href="#">সব দেখুন</a>
+          </div>
         </div>
 
-        <div id="popular-grid" class="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          <!-- Products rendered from JSON -->
+        <div id="<?php echo $sliderId; ?>" class="subject-slider mt-4 flex gap-3 overflow-x-auto scroll-smooth pb-1">
+          <?php
+          if (!empty($products)) {
+            foreach ($products as $product) {
+              echo '<div class="subject-slide w-[170px] shrink-0 sm:w-[190px] md:w-[210px]">';
+              echo $db->products($product);
+              echo '</div>';
+            }
+          }
+          ?>
         </div>
       </section>
+      <?php endforeach; ?>
 
-      <!-- Promo strip -->
-      <section class="mx-auto max-w-7xl px-4 pb-10">
-        <div class="rounded-2xl bg-gradient-to-r from-emerald-700 to-emerald-500 px-5 py-4 text-white shadow-sm">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p class="text-sm font-bold">বিশেষ অফার • ডেমো ব্যানার স্ট্রিপ (স্ক্রিনশটের মতো)</p>
-            <a href="<?php echo domain; ?>" class="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-slate-100">এখনই দেখুন</a>
-          </div>
-        </div>
-      </section>
+      <style>
+        .subject-slider{
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+          cursor: grab;
+          user-select: none;
+          touch-action: pan-y;
+        }
+        .subject-slider::-webkit-scrollbar{
+          display: none;
+        }
+        .subject-slider.is-dragging{
+          cursor: grabbing;
+        }
+      </style>
 
-      <!-- Another repeated product section -->
-      <section class="mx-auto max-w-7xl px-4 pb-14">
-        <div class="flex items-end justify-between gap-4">
-          <div>
-            <h2 class="text-lg font-black text-slate-900 sm:text-xl">নতুন প্রকাশ</h2>
-            <p class="mt-1 text-sm text-slate-600">একই লেআউটে আরও সেকশন (ডেমো)</p>
-          </div>
-          <a class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" href="#">সব দেখুন</a>
-        </div>
+      <script>
+        document.querySelectorAll('.subject-slider-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var slider = document.getElementById(btn.getAttribute('data-slider-target'));
+            if (!slider) return;
 
-        <div id="newarrival-grid" class="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          <!-- Products rendered from JSON -->
-        </div>
-      </section>
+            var scrollAmount = Math.max(slider.clientWidth * 0.8, 260);
+            var direction = btn.getAttribute('data-direction') === 'left' ? -1 : 1;
+            slider.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
+          });
+        });
+
+        document.querySelectorAll('.subject-slider').forEach(function (slider) {
+          var isDragging = false;
+          var startX = 0;
+          var startScrollLeft = 0;
+          var draggedDistance = 0;
+
+          slider.querySelectorAll('img, a').forEach(function (item) {
+            item.setAttribute('draggable', 'false');
+          });
+
+          slider.addEventListener('pointerdown', function (e) {
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            if (e.target.closest('[data-add-cart], button, a, input, select, textarea, label')) return;
+            isDragging = true;
+            draggedDistance = 0;
+            startX = e.clientX;
+            startScrollLeft = slider.scrollLeft;
+            slider.classList.add('is-dragging');
+            slider.setPointerCapture(e.pointerId);
+          });
+
+          slider.addEventListener('pointermove', function (e) {
+            if (!isDragging) return;
+            var walk = e.clientX - startX;
+            draggedDistance = Math.max(draggedDistance, Math.abs(walk));
+            slider.scrollLeft = startScrollLeft - walk;
+          });
+
+          slider.addEventListener('pointerup', function (e) {
+            if (!isDragging) return;
+            isDragging = false;
+            slider.classList.remove('is-dragging');
+            if (slider.hasPointerCapture(e.pointerId)) {
+              slider.releasePointerCapture(e.pointerId);
+            }
+          });
+
+          slider.addEventListener('pointercancel', function (e) {
+            isDragging = false;
+            slider.classList.remove('is-dragging');
+            if (slider.hasPointerCapture(e.pointerId)) {
+              slider.releasePointerCapture(e.pointerId);
+            }
+          });
+
+          slider.addEventListener('click', function (e) {
+            // Keep action controls clickable inside slider cards.
+            if (e.target.closest('[data-add-cart], button, a, input, select, textarea, label')) {
+              return;
+            }
+            if (draggedDistance > 6) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }, true);
+        });
+      </script>
+
+
+
+     
     </main>
 
     

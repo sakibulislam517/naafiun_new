@@ -4,367 +4,513 @@ function csv_to_int_array($value) {
     return array_values(array_filter(array_map('intval', $parts)));
 }
 
-$selectedSubjects = isset($_GET['subject_ids']) ? csv_to_int_array($_GET['subject_ids']) : (isset($_GET['subject']) ? array_values(array_filter(array_map('intval', (array)$_GET['subject']))) : []);
-$selectedWriters = isset($_GET['writer_ids']) ? csv_to_int_array($_GET['writer_ids']) : (isset($_GET['writer']) ? array_values(array_filter(array_map('intval', (array)$_GET['writer']))) : []);
-$selectedPublishers = isset($_GET['publisher_ids']) ? csv_to_int_array($_GET['publisher_ids']) : (isset($_GET['publisher']) ? array_values(array_filter(array_map('intval', (array)$_GET['publisher']))) : []);
+$selectedSubjects = isset($_GET['subject_ids']) ? csv_to_int_array($_GET['subject_ids']) : [];
+$selectedWriters = isset($_GET['writer_ids']) ? csv_to_int_array($_GET['writer_ids']) : [];
+$selectedPublishers = isset($_GET['publisher_ids']) ? csv_to_int_array($_GET['publisher_ids']) : [];
 $minPrice = isset($_GET['min_price']) && $_GET['min_price'] !== '' ? (float)$_GET['min_price'] : null;
 $maxPrice = isset($_GET['max_price']) && $_GET['max_price'] !== '' ? (float)$_GET['max_price'] : null;
 $sort = isset($_GET['sort']) ? trim((string)$_GET['sort']) : 'newest';
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
-$perPage = 12;
 
+// Load filter data for sidebar
 $subjects = $db->getFull('subject', ' ORDER BY name ASC');
 $writers = $db->getFull('writer', ' ORDER BY name ASC');
 $publishers = $db->getFull('publisher', ' ORDER BY name ASC');
-$subjectMap = [];
-$writerMap = [];
-$publisherMap = [];
-foreach ($subjects as $row) $subjectMap[(int)$row['id']] = $row['name'];
-foreach ($writers as $row) $writerMap[(int)$row['id']] = $row['name'];
-foreach ($publishers as $row) $publisherMap[(int)$row['id']] = $row['name'];
-
-$columns = $db->getdata("SHOW COLUMNS FROM product");
-$fields = [];
-foreach ($columns as $column) {
-    if (isset($column['Field'])) $fields[] = $column['Field'];
-}
-$hasSubjectId = in_array('subject_id', $fields, true);
-$hasWriterId = in_array('writer_id', $fields, true);
-$hasPublisherId = in_array('publisher_id', $fields, true);
-
-$whereSql = " AND p.status = 1";
-if (!empty($selectedSubjects)) {
-    if ($hasSubjectId) {
-        $whereSql .= " AND p.subject_id IN (" . implode(',', $selectedSubjects) . ")";
-    } else {
-        $names = [];
-        foreach ($selectedSubjects as $id) if (isset($subjectMap[$id])) $names[] = addslashes($subjectMap[$id]);
-        if (!empty($names)) $whereSql .= " AND p.subject IN ('" . implode("','", $names) . "')";
-    }
-}
-if (!empty($selectedWriters)) {
-    if ($hasWriterId) {
-        $whereSql .= " AND p.writer_id IN (" . implode(',', $selectedWriters) . ")";
-    } else {
-        $names = [];
-        foreach ($selectedWriters as $id) if (isset($writerMap[$id])) $names[] = addslashes($writerMap[$id]);
-        if (!empty($names)) $whereSql .= " AND p.writer IN ('" . implode("','", $names) . "')";
-    }
-}
-if (!empty($selectedPublishers)) {
-    if ($hasPublisherId) {
-        $whereSql .= " AND p.publisher_id IN (" . implode(',', $selectedPublishers) . ")";
-    } else {
-        $names = [];
-        foreach ($selectedPublishers as $id) if (isset($publisherMap[$id])) $names[] = addslashes($publisherMap[$id]);
-        if (!empty($names)) $whereSql .= " AND p.publisher IN ('" . implode("','", $names) . "')";
-    }
-}
-if ($minPrice !== null) $whereSql .= " AND p.price >= " . (float)$minPrice;
-if ($maxPrice !== null) $whereSql .= " AND p.price <= " . (float)$maxPrice;
-
-$orderSql = " ORDER BY p.id DESC";
-if ($sort === 'oldest') $orderSql = " ORDER BY p.id ASC";
-elseif ($sort === 'price_asc') $orderSql = " ORDER BY p.price ASC, p.id DESC";
-elseif ($sort === 'price_desc') $orderSql = " ORDER BY p.price DESC, p.id DESC";
-elseif ($sort === 'popular') $orderSql = " ORDER BY p.id DESC";
-
-$joinSql = ($hasSubjectId ? " LEFT JOIN subject s ON s.id = p.subject_id " : "")
-    . ($hasWriterId ? " LEFT JOIN writer w ON w.id = p.writer_id " : "")
-    . ($hasPublisherId ? " LEFT JOIN publisher pub ON pub.id = p.publisher_id " : "");
-
-$countRows = $db->getdata("SELECT COUNT(*) as total FROM product p {$joinSql} WHERE p.id > 0 {$whereSql}");
-$totalProducts = isset($countRows[0]['total']) ? (int)$countRows[0]['total'] : 0;
-$totalPages = (int)max(1, ceil($totalProducts / $perPage));
-$page = min($page, $totalPages);
-$offset = ($page - 1) * $perPage;
-$start = $totalProducts > 0 ? $offset + 1 : 0;
-$end = min($offset + $perPage, $totalProducts);
-
-$products = $db->getdata(
-    "SELECT p.*"
-    . ($hasSubjectId ? ", s.name AS subject_name" : "")
-    . ($hasWriterId ? ", w.name AS writer_name" : "")
-    . ($hasPublisherId ? ", pub.name AS publisher_name" : "")
-    . " FROM product p {$joinSql} WHERE p.id > 0 {$whereSql}{$orderSql} LIMIT {$offset}, {$perPage}"
-);
-
-$baseQuery = [];
-if (!empty($selectedSubjects)) $baseQuery['subject'] = $selectedSubjects;
-if (!empty($selectedWriters)) $baseQuery['writer'] = $selectedWriters;
-if (!empty($selectedPublishers)) $baseQuery['publisher'] = $selectedPublishers;
-if (!empty($selectedSubjects)) $baseQuery['subject_ids'] = implode(',', $selectedSubjects);
-if (!empty($selectedWriters)) $baseQuery['writer_ids'] = implode(',', $selectedWriters);
-if (!empty($selectedPublishers)) $baseQuery['publisher_ids'] = implode(',', $selectedPublishers);
-if ($minPrice !== null) $baseQuery['min_price'] = $minPrice;
-if ($maxPrice !== null) $baseQuery['max_price'] = $maxPrice;
-if ($sort !== '') $baseQuery['sort'] = $sort;
-
-function books_page_url($targetPage, $query) {
-    $query['page'] = max(1, (int)$targetPage);
-    return 'books?' . http_build_query($query);
-}
-function books_image($image) {
-    $file = basename((string)$image);
-    $path = __DIR__ . '/../assets/images/product/' . $file;
-    return ($file !== '' && file_exists($path)) ? ('assets/images/product/' . $file) : 'assets/images/product/1638727737.jpg';
-}
 ?>
 
-<main class="min-h-screen bg-slate-50">
-  <nav aria-label="Breadcrumb" class="mx-auto max-w-7xl px-4 mt-4 pt-3">
-    <ol class="flex flex-wrap items-center gap-2 text-sm text-slate-500 pb-3">
-      <li><a class="hover:text-slate-900 transition" href="<?php echo domain; ?>">হোম</a></li>
+<main class="min-h-screen bg-white">
+  <!-- Breadcrumb -->
+  <nav aria-label="Breadcrumb" class="mx-auto max-w-[1400px] px-4 sm:px-6 mt-4 pt-3 pb-2">
+    <ol class="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+      <li><a class="hover:text-slate-900 transition" href="<?php echo domain; ?>">Home</a></li>
       <li>/</li>
-      <li class="font-semibold text-slate-900" aria-current="page">বই</li>
+      <li class="font-semibold text-slate-900" aria-current="page">Books</li>
     </ol>
   </nav>
 
-  <div class="mx-auto max-w-7xl px-4 pb-12">
-    <div class="flex gap-6">
-      <aside class="hidden lg:block w-64 shrink-0">
-        <form method="get" action="books" id="booksFilterForm" class="sticky top-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <input type="hidden" name="subject_ids" id="subjectIdsInput" value="<?php echo htmlspecialchars(implode(',', $selectedSubjects), ENT_QUOTES, 'UTF-8'); ?>" />
-          <input type="hidden" name="writer_ids" id="writerIdsInput" value="<?php echo htmlspecialchars(implode(',', $selectedWriters), ENT_QUOTES, 'UTF-8'); ?>" />
-          <input type="hidden" name="publisher_ids" id="publisherIdsInput" value="<?php echo htmlspecialchars(implode(',', $selectedPublishers), ENT_QUOTES, 'UTF-8'); ?>" />
-          <h3 class="text-sm font-bold text-slate-900">ফিল্টার</h3>
+  <div class="mx-auto max-w-[1400px] px-4 sm:px-6 pb-12">
+    <div class="flex gap-6 lg:gap-8">
 
-          <div class="mt-4">
-            <h4 class="text-xs font-semibold text-slate-700 uppercase">বিষয়</h4>
-            <input type="text" data-filter-search="subject-filter-list" placeholder="অনুসন্ধান..." class="mt-2 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20" />
-            <div class="mt-2 max-h-40 overflow-y-auto scrollbar-hide space-y-1.5">
-              <div id="subject-filter-list" class="space-y-1.5">
-              <?php foreach ($subjects as $subject): ?>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" data-filter-group="subject" value="<?php echo (int)$subject['id']; ?>" class="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" <?php echo in_array((int)$subject['id'], $selectedSubjects, true) ? 'checked' : ''; ?> />
-                  <span class="text-sm text-slate-600" data-label><?php echo htmlspecialchars($subject['name'], ENT_QUOTES, 'UTF-8'); ?></span>
-                </label>
-              <?php endforeach; ?>
+      <!-- ===== SIDEBAR FILTERS (Desktop) ===== -->
+      <aside class="hidden lg:block w-72 xl:w-80 shrink-0">
+        <div class="sticky top-20">
+          <!-- Mobile Filter Button (visible on mobile only) -->
+          <button id="mobileFilterBtn" class="lg:hidden fixed bottom-6 left-6 z-40 flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-lg hover:bg-emerald-700 transition">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            Filters
+          </button>
+
+          <!-- Sidebar Card -->
+          <div id="desktopFilterMount">
+          <div id="booksFilterCard" class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <!-- Search -->
+            <div class="p-4 border-b border-slate-100">
+              <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" id="booksSearchInput" value="<?php echo htmlspecialchars($searchQuery, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Search books..." class="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition" />
               </div>
             </div>
-          </div>
 
-          <hr class="my-4 border-slate-100" />
-
-          <div>
-            <h4 class="text-xs font-semibold text-slate-700 uppercase">লেখক</h4>
-            <input type="text" data-filter-search="writer-filter-list" placeholder="অনুসন্ধান..." class="mt-2 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20" />
-            <div class="mt-2 max-h-40 overflow-y-auto scrollbar-hide space-y-1.5">
-              <div id="writer-filter-list" class="space-y-1.5">
-              <?php foreach ($writers as $writer): ?>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" data-filter-group="writer" value="<?php echo (int)$writer['id']; ?>" class="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" <?php echo in_array((int)$writer['id'], $selectedWriters, true) ? 'checked' : ''; ?> />
-                  <span class="text-sm text-slate-600" data-label><?php echo htmlspecialchars($writer['name'], ENT_QUOTES, 'UTF-8'); ?></span>
-                </label>
-              <?php endforeach; ?>
+            <!-- Subject Filter -->
+            <div class="border-b border-slate-100">
+              <button class="filter-toggle w-full flex items-center justify-between px-4 py-3 text-sm font-bold text-slate-900 hover:bg-slate-50 transition" data-target="filter-subjects">
+                <span>Subjects</span>
+                <svg class="filter-icon h-4 w-4 text-slate-400 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <div id="filter-subjects" class="filter-content px-4 pb-3">
+                <input type="text" data-filter-search="subject-list" placeholder="Search subjects..." class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs mb-2 outline-none focus:border-emerald-500 transition" />
+                <div id="subject-list" class="max-h-48 overflow-y-auto space-y-0.5">
+                  <?php foreach ($subjects as $subject): ?>
+                    <label class="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-slate-50 transition cursor-pointer">
+                      <input type="checkbox" data-filter-group="subject" value="<?php echo (int)$subject['id']; ?>" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer" <?php echo in_array((int)$subject['id'], $selectedSubjects, true) ? 'checked' : ''; ?> />
+                      <span class="text-sm text-slate-700" data-label><?php echo htmlspecialchars($subject['name'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    </label>
+                  <?php endforeach; ?>
+                </div>
               </div>
             </div>
-          </div>
 
-          <hr class="my-4 border-slate-100" />
-
-          <div>
-            <h4 class="text-xs font-semibold text-slate-700 uppercase">প্রকাশনী</h4>
-            <input type="text" data-filter-search="publisher-filter-list" placeholder="অনুসন্ধান..." class="mt-2 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20" />
-            <div class="mt-2 max-h-40 overflow-y-auto scrollbar-hide space-y-1.5">
-              <div id="publisher-filter-list" class="space-y-1.5">
-              <?php foreach ($publishers as $publisher): ?>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" data-filter-group="publisher" value="<?php echo (int)$publisher['id']; ?>" class="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" <?php echo in_array((int)$publisher['id'], $selectedPublishers, true) ? 'checked' : ''; ?> />
-                  <span class="text-sm text-slate-600" data-label><?php echo htmlspecialchars($publisher['name'], ENT_QUOTES, 'UTF-8'); ?></span>
-                </label>
-              <?php endforeach; ?>
+            <!-- Writer Filter -->
+            <div class="border-b border-slate-100">
+              <button class="filter-toggle w-full flex items-center justify-between px-4 py-3 text-sm font-bold text-slate-900 hover:bg-slate-50 transition" data-target="filter-writers">
+                <span>Writers</span>
+                <svg class="filter-icon h-4 w-4 text-slate-400 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <div id="filter-writers" class="filter-content px-4 pb-3">
+                <input type="text" data-filter-search="writer-list" placeholder="Search writers..." class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs mb-2 outline-none focus:border-emerald-500 transition" />
+                <div id="writer-list" class="max-h-48 overflow-y-auto space-y-0.5">
+                  <?php foreach ($writers as $writer): ?>
+                    <label class="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-slate-50 transition cursor-pointer">
+                      <input type="checkbox" data-filter-group="writer" value="<?php echo (int)$writer['id']; ?>" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer" <?php echo in_array((int)$writer['id'], $selectedWriters, true) ? 'checked' : ''; ?> />
+                      <span class="text-sm text-slate-700" data-label><?php echo htmlspecialchars($writer['name'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    </label>
+                  <?php endforeach; ?>
+                </div>
               </div>
             </div>
-          </div>
 
-          <hr class="my-4 border-slate-100" />
+            <!-- Publisher Filter -->
+            <div class="border-b border-slate-100">
+              <button class="filter-toggle w-full flex items-center justify-between px-4 py-3 text-sm font-bold text-slate-900 hover:bg-slate-50 transition" data-target="filter-publishers">
+                <span>Publishers</span>
+                <svg class="filter-icon h-4 w-4 text-slate-400 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <div id="filter-publishers" class="filter-content px-4 pb-3">
+                <input type="text" data-filter-search="publisher-list" placeholder="Search publishers..." class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs mb-2 outline-none focus:border-emerald-500 transition" />
+                <div id="publisher-list" class="max-h-48 overflow-y-auto space-y-0.5">
+                  <?php foreach ($publishers as $publisher): ?>
+                    <label class="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-slate-50 transition cursor-pointer">
+                      <input type="checkbox" data-filter-group="publisher" value="<?php echo (int)$publisher['id']; ?>" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer" <?php echo in_array((int)$publisher['id'], $selectedPublishers, true) ? 'checked' : ''; ?> />
+                      <span class="text-sm text-slate-700" data-label><?php echo htmlspecialchars($publisher['name'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    </label>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+            </div>
 
-          <div>
-            <h4 class="text-xs font-semibold text-slate-700 uppercase">মূল্য সীমা</h4>
-            <div class="mt-2 flex items-center gap-2">
-              <input type="number" name="min_price" min="0" value="<?php echo $minPrice !== null ? htmlspecialchars((string)$minPrice, ENT_QUOTES, 'UTF-8') : ''; ?>" placeholder="৳ ০" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20" />
-              <span class="text-slate-400">-</span>
-              <input type="number" name="max_price" min="0" value="<?php echo $maxPrice !== null ? htmlspecialchars((string)$maxPrice, ENT_QUOTES, 'UTF-8') : ''; ?>" placeholder="৳ ৫০০০" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20" />
+            <!-- Price Range -->
+            <div class="p-4">
+              <h4 class="text-sm font-bold text-slate-900 mb-3">Price Range</h4>
+              <div class="flex items-center gap-2">
+                <input type="number" id="booksMinPrice" min="0" value="<?php echo $minPrice !== null ? htmlspecialchars((string)$minPrice, ENT_QUOTES, 'UTF-8') : ''; ?>" placeholder="৳ 0" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-emerald-500 transition" />
+                <span class="text-slate-400 text-sm">-</span>
+                <input type="number" id="booksMaxPrice" min="0" value="<?php echo $maxPrice !== null ? htmlspecialchars((string)$maxPrice, ENT_QUOTES, 'UTF-8') : ''; ?>" placeholder="৳ 5000" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-emerald-500 transition" />
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="p-4 border-t border-slate-100 space-y-2">
+              <button id="applyFiltersBtn" class="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition shadow-sm">
+                Apply Filters
+              </button>
+              <button id="resetFiltersBtn" type="button" class="block w-full rounded-xl border border-slate-200 px-4 py-2.5 text-center text-sm font-medium text-slate-600 hover:bg-slate-50 transition">
+                Reset All
+              </button>
             </div>
           </div>
-
-          <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort, ENT_QUOTES, 'UTF-8'); ?>">
-          <button type="submit" class="mt-4 w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition">ফিল্টার প্রয়োগ করুন</button>
-          <a href="books" class="mt-2 block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-center text-sm font-medium text-slate-600 hover:bg-slate-50 transition">রিসেট করুন</a>
-        </form>
+          </div>
+        </div>
       </aside>
 
-      <div class="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
-        <form method="get" action="books" class="mb-4 flex items-center justify-end">
-          <input type="hidden" name="subject_ids" value="<?php echo htmlspecialchars(implode(',', $selectedSubjects), ENT_QUOTES, 'UTF-8'); ?>">
-          <input type="hidden" name="writer_ids" value="<?php echo htmlspecialchars(implode(',', $selectedWriters), ENT_QUOTES, 'UTF-8'); ?>">
-          <input type="hidden" name="publisher_ids" value="<?php echo htmlspecialchars(implode(',', $selectedPublishers), ENT_QUOTES, 'UTF-8'); ?>">
-          <?php if ($minPrice !== null): ?><input type="hidden" name="min_price" value="<?php echo htmlspecialchars((string)$minPrice, ENT_QUOTES, 'UTF-8'); ?>"><?php endif; ?>
-          <?php if ($maxPrice !== null): ?><input type="hidden" name="max_price" value="<?php echo htmlspecialchars((string)$maxPrice, ENT_QUOTES, 'UTF-8'); ?>"><?php endif; ?>
-          <label class="text-sm text-slate-500 mr-2">সাজান:</label>
-          <select name="sort" onchange="this.form.submit()" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20">
-            <option value="newest" <?php echo $sort === 'newest' ? 'selected' : ''; ?>>নতুন থেকে পুরনো</option>
-            <option value="oldest" <?php echo $sort === 'oldest' ? 'selected' : ''; ?>>পুরনো থেকে নতুন</option>
-            <option value="price_asc" <?php echo $sort === 'price_asc' ? 'selected' : ''; ?>>মূল্য: কম থেকে বেশি</option>
-            <option value="price_desc" <?php echo $sort === 'price_desc' ? 'selected' : ''; ?>>মূল্য: বেশি থেকে কম</option>
-            <option value="popular" <?php echo $sort === 'popular' ? 'selected' : ''; ?>>জনপ্রিয়</option>
-          </select>
-        </form>
+      <!-- ===== MAIN CONTENT ===== -->
+      <div class="flex-1 min-w-0">
 
-      <p class="text-sm text-slate-500 mb-4">
-        <?php echo $start; ?>-<?php echo $end; ?> / <?php echo $totalProducts; ?>টি বই
-      </p>
+        <!-- Top Bar: Sort + Results Count -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3">
+            <button id="mobileFilterBtnInner" class="lg:hidden rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">
+              <svg class="inline h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+              Filters
+            </button>
+            <h1 class="text-lg font-bold text-slate-900">All Books</h1>
+          </div>
 
-      <?php if (!empty($products)): ?>
-        <div class="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-          <?php foreach ($products as $product): ?>
-            <?php
-            $title = (string)($product['name_bn'] ?: $product['name']);
-            $authorName = isset($product['writer_name']) ? (string)$product['writer_name'] : (string)$product['writer'];
-            $publisherName = isset($product['publisher_name']) ? (string)$product['publisher_name'] : (string)$product['publisher'];
-            $subjectName = isset($product['subject_name']) ? (string)$product['subject_name'] : (string)$product['subject'];
-            $price = (float)$product['price'];
-            $printedPrice = (float)$product['printed_price'];
-            $originalPrice = $printedPrice > 0 ? $printedPrice : $price;
-            $discountPercent = $originalPrice > 0 ? (int)round((($originalPrice - $price) / $originalPrice) * 100) : 0;
-            $image = books_image($product['image']);
-            $cardProduct = [
-                'id' => (int)$product['id'],
-                'title' => $title,
-                'author' => $authorName,
-                'publisher' => $publisherName,
-                'category' => $subjectName,
-                'slug' => (string)$product['slug'],
-                'price' => $price,
-                'originalPrice' => $originalPrice,
-                'discount' => max(0, $discountPercent),
-                'image' => $image,
-                'inStock' => !isset($product['stock']) || (int)$product['stock'] > 0,
-                'reviews' => 0
-            ];
-            ?>
-            <article class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition" data-id="<?php echo (int)$product['id']; ?>" data-product="<?php echo htmlspecialchars(json_encode($cardProduct), ENT_QUOTES, 'UTF-8'); ?>">
-              <a href="details?slug=<?php echo urlencode((string)$product['slug']); ?>" class="block">
-                <div class="relative aspect-[4/5] bg-slate-100">
-                  <img src="<?php echo htmlspecialchars($image, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>" class="h-full w-full object-cover" loading="lazy" />
-                  <?php if ($discountPercent > 0): ?>
-                    <span class="absolute left-2 top-2 rounded bg-rose-600 px-2 py-1 text-xs font-bold text-white">-<?php echo $discountPercent; ?>%</span>
-                  <?php endif; ?>
-                </div>
-                <div class="p-3">
-                  <h3 class="line-clamp-2 text-sm font-bold text-slate-900 min-h-[2.5rem]"><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></h3>
-                  <p class="mt-1 text-xs text-slate-500"><?php echo htmlspecialchars($authorName, ENT_QUOTES, 'UTF-8'); ?></p>
-                  <div class="mt-2 flex items-baseline gap-2">
-                    <p class="text-sm font-extrabold text-slate-900">৳ <?php echo number_format($price, 0); ?></p>
-                    <?php if ($originalPrice > $price): ?>
-                      <p class="text-xs text-slate-400 line-through">৳ <?php echo number_format($originalPrice, 0); ?></p>
-                    <?php endif; ?>
-                  </div>
-                </div>
-              </a>
-              <div class="px-3 pb-3">
-                <button class="mt-1 w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition" type="button" data-add-cart>
-                  কার্টে যোগ করুন
-                </button>
-              </div>
-            </article>
-          <?php endforeach; ?>
+          <div class="flex items-center gap-3">
+            <span id="booksResultsInfo" class="text-sm text-slate-500"></span>
+            <select id="booksSortSelect" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 transition">
+              <option value="newest" <?php echo $sort === 'newest' ? 'selected' : ''; ?>>Newest First</option>
+              <option value="oldest" <?php echo $sort === 'oldest' ? 'selected' : ''; ?>>Oldest First</option>
+              <option value="price_asc" <?php echo $sort === 'price_asc' ? 'selected' : ''; ?>>Price: Low to High</option>
+              <option value="price_desc" <?php echo $sort === 'price_desc' ? 'selected' : ''; ?>>Price: High to Low</option>
+            </select>
+          </div>
         </div>
-      <?php else: ?>
-        <div class="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center">
-          <h3 class="text-base font-semibold text-slate-700">কোনো বই পাওয়া যায়নি</h3>
+
+        <!-- Active Filter Tags -->
+        <div id="activeFilterTags" class="mb-4 hidden"></div>
+
+        <!-- Products Container (AJAX) -->
+        <div id="booksProductsContainer">
+          <!-- Initial render by PHP, then AJAX updates -->
         </div>
-      <?php endif; ?>
 
-      <?php if ($totalPages > 1): ?>
-        <div class="mt-8 flex items-center justify-center gap-1">
-          <?php
-          $prevDisabled = $page <= 1;
-          $nextDisabled = $page >= $totalPages;
-          ?>
-          <a
-            href="<?php echo $prevDisabled ? '#' : books_page_url($page - 1, $baseQuery); ?>"
-            class="rounded-lg border border-slate-300 px-3 py-2 text-sm <?php echo $prevDisabled ? 'text-slate-400 pointer-events-none' : 'text-slate-600 hover:bg-slate-50'; ?>"
-          >‹</a>
-
-          <?php
-          $window = 2;
-          $startPage = max(1, $page - $window);
-          $endPage = min($totalPages, $page + $window);
-          if ($startPage > 1): ?>
-            <a href="<?php echo books_page_url(1, $baseQuery); ?>" class="rounded-lg border border-slate-300 px-3.5 py-2 text-sm text-slate-600 hover:bg-slate-50">1</a>
-            <?php if ($startPage > 2): ?><span class="px-2 text-slate-400">...</span><?php endif; ?>
-          <?php endif; ?>
-
-          <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
-            <a
-              href="<?php echo books_page_url($i, $baseQuery); ?>"
-              class="rounded-lg px-3.5 py-2 text-sm <?php echo $i === $page ? 'bg-emerald-600 font-bold text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'; ?>"
-            ><?php echo $i; ?></a>
-          <?php endfor; ?>
-
-          <?php if ($endPage < $totalPages): ?>
-            <?php if ($endPage < $totalPages - 1): ?><span class="px-2 text-slate-400">...</span><?php endif; ?>
-            <a href="<?php echo books_page_url($totalPages, $baseQuery); ?>" class="rounded-lg border border-slate-300 px-3.5 py-2 text-sm text-slate-600 hover:bg-slate-50"><?php echo $totalPages; ?></a>
-          <?php endif; ?>
-
-          <a
-            href="<?php echo $nextDisabled ? '#' : books_page_url($page + 1, $baseQuery); ?>"
-            class="rounded-lg border border-slate-300 px-3 py-2 text-sm <?php echo $nextDisabled ? 'text-slate-400 pointer-events-none' : 'text-slate-600 hover:bg-slate-50'; ?>"
-          >›</a>
-        </div>
-      <?php endif; ?>
+        <!-- Pagination Container (AJAX) -->
+        <div id="booksPaginationContainer"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Mobile Filter Overlay -->
+  <div id="booksFilterOverlay" class="fixed inset-0 bg-black/50 z-50 hidden lg:hidden"></div>
+  <!-- Mobile Filter Sidebar -->
+  <div id="booksFilterSidebar" class="fixed inset-y-0 left-0 w-80 max-w-[85vw] bg-white z-50 transform -translate-x-full transition-transform duration-300 lg:hidden overflow-y-auto">
+    <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+      <h2 class="text-lg font-bold text-slate-900">Filters</h2>
+      <button id="closeMobileFilter" class="rounded-lg p-2 hover:bg-slate-100 transition">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="mobileFilterContent">
+      <!-- Clone of desktop filters will be moved here on mobile -->
+    </div>
+    <div class="p-4 border-t border-slate-100 space-y-2 sticky bottom-0 bg-white">
+      <button id="applyMobileFiltersBtn" class="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition">Apply Filters</button>
+      <button id="resetMobileFiltersBtn" type="button" class="block w-full rounded-xl border border-slate-200 px-4 py-2.5 text-center text-sm font-medium text-slate-600 hover:bg-slate-50 transition">Reset All</button>
     </div>
   </div>
 </main>
 
 <script>
-(function () {
-  var cards = document.querySelectorAll('article[data-product]');
-  var cache = [];
-  cards.forEach(function (card) {
-    try {
-      var product = JSON.parse(card.getAttribute('data-product'));
-      card._productData = product;
-      cache.push(product);
-    } catch (e) {}
-  });
-  window._productsCache = cache;
-})();
-</script>
-<script>
-(function () {
-  var filterForm = document.getElementById('booksFilterForm');
-  if (filterForm) {
-    filterForm.addEventListener('submit', function () {
-      function getCsv(group) {
-        var values = [];
-        filterForm.querySelectorAll('input[data-filter-group="' + group + '"]:checked').forEach(function (el) {
-          values.push(el.value);
-        });
-        return values.join(',');
-      }
-      var subjectInput = document.getElementById('subjectIdsInput');
-      var writerInput = document.getElementById('writerIdsInput');
-      var publisherInput = document.getElementById('publisherIdsInput');
-      if (subjectInput) subjectInput.value = getCsv('subject');
-      if (writerInput) writerInput.value = getCsv('writer');
-      if (publisherInput) publisherInput.value = getCsv('publisher');
+(function() {
+  'use strict';
+
+  // ===== State =====
+  var state = {
+    page: <?php echo $page; ?>,
+    sort: '<?php echo htmlspecialchars($sort, ENT_QUOTES, "UTF-8"); ?>',
+    subjectIds: <?php echo json_encode($selectedSubjects); ?>,
+    writerIds: <?php echo json_encode($selectedWriters); ?>,
+    publisherIds: <?php echo json_encode($selectedPublishers); ?>,
+    minPrice: <?php echo $minPrice !== null ? json_encode((string)$minPrice) : '""'; ?>,
+    maxPrice: <?php echo $maxPrice !== null ? json_encode((string)$maxPrice) : '""'; ?>,
+    search: '<?php echo htmlspecialchars($searchQuery, ENT_QUOTES, "UTF-8"); ?>',
+    debounceTimer: null,
+    requestController: null,
+    requestToken: 0,
+    hasHistoryState: false
+  };
+
+  var containers = {
+    products: document.getElementById('booksProductsContainer'),
+    pagination: document.getElementById('booksPaginationContainer'),
+    resultsInfo: document.getElementById('booksResultsInfo')
+  };
+  var sortSelect = document.getElementById('booksSortSelect');
+  var searchInput = document.getElementById('booksSearchInput');
+  var tagsContainer = document.getElementById('activeFilterTags');
+  var desktopFilterMount = document.getElementById('desktopFilterMount');
+  var mobileFilterContent = document.getElementById('mobileFilterContent');
+  var filterCard = document.getElementById('booksFilterCard');
+
+  // ===== Skeleton Loading =====
+  function showSkeleton() {
+    var html = '<div class="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">';
+    for (var i = 0; i < 8; i++) {
+      html += '<article class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm animate-pulse">' +
+        '<div class="aspect-[3/4] bg-slate-200"></div>' +
+        '<div class="p-3 space-y-3"><div class="h-4 bg-slate-200 rounded w-3/4"></div><div class="h-3 bg-slate-200 rounded w-1/2"></div><div class="h-5 bg-slate-200 rounded w-1/3"></div></div>' +
+        '</article>';
+    }
+    html += '</div>';
+    containers.products.innerHTML = html;
+  }
+
+  // ===== Collect Filters =====
+  function collectFilters() {
+    state.subjectIds = [];
+    state.writerIds = [];
+    state.publisherIds = [];
+    document.querySelectorAll('input[data-filter-group="subject"]:checked').forEach(function(el) { state.subjectIds.push(parseInt(el.value)); });
+    document.querySelectorAll('input[data-filter-group="writer"]:checked').forEach(function(el) { state.writerIds.push(parseInt(el.value)); });
+    document.querySelectorAll('input[data-filter-group="publisher"]:checked').forEach(function(el) { state.publisherIds.push(parseInt(el.value)); });
+    var minEl = document.getElementById('booksMinPrice');
+    var maxEl = document.getElementById('booksMaxPrice');
+    if (minEl) state.minPrice = minEl.value;
+    if (maxEl) state.maxPrice = maxEl.value;
+  }
+
+  // ===== Build URL =====
+  function buildUrl(p) {
+    var q = {};
+    if (state.sort && state.sort !== 'newest') q.sort = state.sort;
+    if (state.subjectIds.length) q.subject_ids = state.subjectIds.join(',');
+    if (state.writerIds.length) q.writer_ids = state.writerIds.join(',');
+    if (state.publisherIds.length) q.publisher_ids = state.publisherIds.join(',');
+    if (state.minPrice !== '') q.min_price = state.minPrice;
+    if (state.maxPrice !== '') q.max_price = state.maxPrice;
+    if (state.search) q.search = state.search;
+    if (p > 1) q.page = p;
+    var qs = new URLSearchParams(q).toString();
+    return qs ? ('books?' + qs) : 'books';
+  }
+
+  function applyUrlState() {
+    var params = new URLSearchParams(window.location.search || '');
+    state.page = Math.max(1, parseInt(params.get('page') || '1', 10) || 1);
+    state.sort = params.get('sort') || 'newest';
+    state.subjectIds = (params.get('subject_ids') || '').split(',').map(function(v) { return parseInt(v, 10); }).filter(function(v) { return !isNaN(v); });
+    state.writerIds = (params.get('writer_ids') || '').split(',').map(function(v) { return parseInt(v, 10); }).filter(function(v) { return !isNaN(v); });
+    state.publisherIds = (params.get('publisher_ids') || '').split(',').map(function(v) { return parseInt(v, 10); }).filter(function(v) { return !isNaN(v); });
+    state.minPrice = params.get('min_price') || '';
+    state.maxPrice = params.get('max_price') || '';
+    state.search = params.get('search') || '';
+
+    if (sortSelect) sortSelect.value = state.sort;
+    if (searchInput) searchInput.value = state.search;
+    var minEl = document.getElementById('booksMinPrice');
+    var maxEl = document.getElementById('booksMaxPrice');
+    if (minEl) minEl.value = state.minPrice;
+    if (maxEl) maxEl.value = state.maxPrice;
+
+    document.querySelectorAll('input[data-filter-group="subject"]').forEach(function(el) {
+      el.checked = state.subjectIds.indexOf(parseInt(el.value, 10)) > -1;
+    });
+    document.querySelectorAll('input[data-filter-group="writer"]').forEach(function(el) {
+      el.checked = state.writerIds.indexOf(parseInt(el.value, 10)) > -1;
+    });
+    document.querySelectorAll('input[data-filter-group="publisher"]').forEach(function(el) {
+      el.checked = state.publisherIds.indexOf(parseInt(el.value, 10)) > -1;
     });
   }
 
-  document.querySelectorAll('[data-filter-search]').forEach(function (input) {
-    input.addEventListener('input', function () {
-      var target = document.getElementById(input.getAttribute('data-filter-search'));
+  function renderActiveTags(tagsHtml) {
+    if (!tagsContainer) return;
+    tagsContainer.innerHTML = tagsHtml || '';
+    tagsContainer.classList.toggle('hidden', !tagsHtml || tagsHtml.trim() === '');
+  }
+
+  function resetAllFilters() {
+    state.page = 1;
+    state.sort = 'newest';
+    state.subjectIds = [];
+    state.writerIds = [];
+    state.publisherIds = [];
+    state.minPrice = '';
+    state.maxPrice = '';
+    state.search = '';
+    applyUrlState();
+    fetchBooks(true);
+  }
+
+  // ===== Fetch via AJAX =====
+  function fetchBooks(pushHistory, scrollTop) {
+    if (typeof pushHistory === 'undefined') pushHistory = true;
+    if (typeof scrollTop === 'undefined') scrollTop = false;
+    if (state.requestController) state.requestController.abort();
+
+    var token = ++state.requestToken;
+    state.requestController = new AbortController();
+    showSkeleton();
+
+    var fd = new URLSearchParams();
+    fd.append('action', 'books_filter');
+    fd.append('page', state.page);
+    fd.append('sort', state.sort);
+    if (state.subjectIds.length) fd.append('subject_ids', state.subjectIds.join(','));
+    if (state.writerIds.length) fd.append('writer_ids', state.writerIds.join(','));
+    if (state.publisherIds.length) fd.append('publisher_ids', state.publisherIds.join(','));
+    if (state.minPrice !== '') fd.append('min_price', state.minPrice);
+    if (state.maxPrice !== '') fd.append('max_price', state.maxPrice);
+    if (state.search) fd.append('search', state.search);
+
+    fetch('ajax.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+      body: fd.toString(),
+      signal: state.requestController.signal
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (token !== state.requestToken) return;
+      if (data.status === 1) {
+        containers.products.innerHTML = data.html;
+        containers.pagination.innerHTML = data.pagination;
+        renderActiveTags(data.tags_html || '');
+        if (containers.resultsInfo) {
+          containers.resultsInfo.textContent = data.total > 0 ? data.start + '-' + data.end + ' of ' + data.total + ' books' : 'No books found';
+        }
+        if (pushHistory) {
+          window.history.pushState({page: state.page}, '', buildUrl(state.page));
+        } else if (!state.hasHistoryState) {
+          window.history.replaceState({page: state.page}, '', buildUrl(state.page));
+        }
+        state.hasHistoryState = true;
+        if (scrollTop) {
+          window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+      }
+    })
+    .catch(function(err) {
+      if (err && err.name === 'AbortError') return;
+      console.error('[Books] Error:', err);
+      containers.products.innerHTML = '<div class="text-center py-16"><h3 class="text-lg font-bold text-slate-700">Error loading books</h3><button onclick="location.reload()" class="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white">Reload</button></div>';
+    });
+  }
+
+  // ===== Debounce =====
+  function debounceFetch() {
+    clearTimeout(state.debounceTimer);
+    state.debounceTimer = setTimeout(function() {
+      state.page = 1;
+      fetchBooks(true, false);
+    }, 300);
+  }
+
+  // ===== Toggle Filter Sections =====
+  document.querySelectorAll('.filter-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var target = document.getElementById(btn.dataset.target);
+      var icon = btn.querySelector('.filter-icon');
+      if (target) {
+        var isOpen = target.style.display !== 'none';
+        target.style.display = isOpen ? 'none' : 'block';
+        icon.style.transform = isOpen ? '' : 'rotate(180deg)';
+      }
+    });
+  });
+
+  // ===== Search within filter lists =====
+  document.querySelectorAll('[data-filter-search]').forEach(function(input) {
+    input.addEventListener('input', function() {
+      var target = document.getElementById(this.dataset.filterSearch);
       if (!target) return;
-      var q = (input.value || '').toLowerCase();
-      target.querySelectorAll('label').forEach(function (label) {
-        var txt = (label.querySelector('[data-label]')?.textContent || '').toLowerCase();
+      var q = this.value.toLowerCase();
+      target.querySelectorAll('label').forEach(function(label) {
+        var labelTextEl = label.querySelector('[data-label]');
+        var txt = labelTextEl ? labelTextEl.textContent.toLowerCase() : '';
         label.style.display = txt.indexOf(q) > -1 ? '' : 'none';
       });
     });
   });
+
+  // ===== Checkbox change =====
+  document.querySelectorAll('input[data-filter-group]').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+      collectFilters();
+      debounceFetch();
+    });
+  });
+
+  // ===== Sort change =====
+  if (sortSelect) {
+    sortSelect.addEventListener('change', function() {
+      state.sort = this.value;
+      state.page = 1;
+      fetchBooks(true, false);
+    });
+  }
+
+  // ===== Search input =====
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      state.search = this.value.trim();
+      debounceFetch();
+    });
+  }
+
+  // ===== Price inputs =====
+  ['booksMinPrice', 'booksMaxPrice'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', function() { collectFilters(); debounceFetch(); });
+  });
+
+  // ===== Apply filters button =====
+  var applyBtn = document.getElementById('applyFiltersBtn');
+  if (applyBtn) applyBtn.addEventListener('click', function() { collectFilters(); state.page = 1; fetchBooks(true, false); });
+  var resetBtn = document.getElementById('resetFiltersBtn');
+  if (resetBtn) resetBtn.addEventListener('click', resetAllFilters);
+
+  // ===== Pagination click (delegated) =====
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-books-page]');
+    if (!btn || btn.disabled) return;
+    e.preventDefault();
+    var p = parseInt(btn.dataset.booksPage, 10);
+    if (p !== state.page) { state.page = p; fetchBooks(true, true); }
+  });
+
+  document.addEventListener('click', function(e) {
+    var remove = e.target.closest('[data-remove-filter]');
+    if (!remove) return;
+    e.preventDefault();
+    var type = remove.getAttribute('data-remove-filter');
+    var value = parseInt(remove.getAttribute('data-filter-value') || '0', 10);
+    if (type === 'subject') state.subjectIds = state.subjectIds.filter(function(v) { return v !== value; });
+    if (type === 'writer') state.writerIds = state.writerIds.filter(function(v) { return v !== value; });
+    if (type === 'publisher') state.publisherIds = state.publisherIds.filter(function(v) { return v !== value; });
+    if (type === 'price') { state.minPrice = ''; state.maxPrice = ''; }
+    state.page = 1;
+    fetchBooks(true, false);
+  });
+
+  document.addEventListener('click', function(e) {
+    var clearBtn = e.target.closest('[data-clear-filters="1"]');
+    if (!clearBtn) return;
+    e.preventDefault();
+    resetAllFilters();
+  });
+
+  // ===== Mobile filter =====
+  function openMobile() {
+    var sidebar = document.getElementById('booksFilterSidebar');
+    var overlay = document.getElementById('booksFilterOverlay');
+    if (filterCard && mobileFilterContent && filterCard.parentElement !== mobileFilterContent) {
+      mobileFilterContent.appendChild(filterCard);
+    }
+    if (sidebar) { sidebar.classList.remove('-translate-x-full'); sidebar.classList.add('translate-x-0'); }
+    if (overlay) overlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMobile() {
+    var sidebar = document.getElementById('booksFilterSidebar');
+    var overlay = document.getElementById('booksFilterOverlay');
+    if (filterCard && desktopFilterMount && filterCard.parentElement !== desktopFilterMount) {
+      desktopFilterMount.appendChild(filterCard);
+    }
+    if (sidebar) { sidebar.classList.add('-translate-x-full'); sidebar.classList.remove('translate-x-0'); }
+    if (overlay) overlay.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+  var mobBtn = document.getElementById('mobileFilterBtn') || document.getElementById('mobileFilterBtnInner');
+  if (mobBtn) mobBtn.addEventListener('click', openMobile);
+  var overlay = document.getElementById('booksFilterOverlay');
+  if (overlay) overlay.addEventListener('click', closeMobile);
+  var closeBtn = document.getElementById('closeMobileFilter');
+  if (closeBtn) closeBtn.addEventListener('click', closeMobile);
+  var applyMobileBtn = document.getElementById('applyMobileFiltersBtn');
+  if (applyMobileBtn) applyMobileBtn.addEventListener('click', function() { collectFilters(); state.page = 1; fetchBooks(true, false); closeMobile(); });
+  var resetMobileBtn = document.getElementById('resetMobileFiltersBtn');
+  if (resetMobileBtn) resetMobileBtn.addEventListener('click', function() { resetAllFilters(); closeMobile(); });
+
+  // ===== Pop state (browser back/forward) =====
+  window.addEventListener('popstate', function() {
+    applyUrlState();
+    fetchBooks(false, false);
+  });
+
+  // ===== Initial load =====
+  applyUrlState();
+  fetchBooks(false, false);
 })();
 </script>

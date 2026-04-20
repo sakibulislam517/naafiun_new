@@ -46,8 +46,6 @@ function find_or_create_social_customer($db, $name, $email)
     return (int)$db->lastid;
 }
 
-
-
 if ($action == 'search_publishers') {
     $search = isset($_POST['search']) ? trim($_POST['search']) : '';
     $where = $db->build_search_where($search);
@@ -128,7 +126,7 @@ if ($action == 'customer_signup') {
     $terms = isset($_POST['terms']) ? 1 : 0;
 
     if ($name === '' || $email === '' || $phoneInput === '' || $password === '' || $confirmPassword === '') {
-        echo json_encode(['status' => 0, 'message' => 'সব প্রয়োজনীয় তথ্য পূরণ করুন।']);
+        echo json_encode(['status' => 0, 'message' => 'সব প্রয়োজনীয় তথ্য পূরণ করুন।']);
         exit;
     }
 
@@ -148,12 +146,12 @@ if ($action == 'customer_signup') {
     }
 
     if (strlen($password) < 6) {
-        echo json_encode(['status' => 0, 'message' => 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।']);
+        echo json_encode(['status' => 0, 'message' => 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।']);
         exit;
     }
 
     if ($password !== $confirmPassword) {
-        echo json_encode(['status' => 0, 'message' => 'পাসওয়ার্ড মিলেনি।']);
+        echo json_encode(['status' => 0, 'message' => 'পাসওয়ার্ড মিলেনি।']);
         exit;
     }
 
@@ -162,13 +160,13 @@ if ($action == 'customer_signup') {
 
     $emailExists = $db->row_count("SELECT id FROM ledger_name WHERE email = '$safeEmail' LIMIT 1");
     if ($emailExists > 0) {
-        echo json_encode(['status' => 0, 'message' => 'এই ইমেইল দিয়ে আগে থেকেই অ্যাকাউন্ট আছে।']);
+        echo json_encode(['status' => 0, 'message' => 'এই ইমেইল দিয়ে আগে থেকেই অ্যাকাউন্ট আছে।']);
         exit;
     }
 
     $phoneExists = $db->row_count("SELECT id FROM ledger_name WHERE number = '$safePhone' LIMIT 1");
     if ($phoneExists > 0) {
-        echo json_encode(['status' => 0, 'message' => 'এই ফোন নম্বর দিয়ে আগে থেকেই অ্যাকাউন্ট আছে।']);
+        echo json_encode(['status' => 0, 'message' => 'এই ফোন নম্বর দিয়ে আগে থেকেই অ্যাকাউন্ট আছে।']);
         exit;
     }
 
@@ -184,12 +182,12 @@ if ($action == 'customer_signup') {
     ]);
 
     if (!$insertStatus) {
-        echo json_encode(['status' => 0, 'message' => 'অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।']);
+        echo json_encode(['status' => 0, 'message' => 'অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।']);
         exit;
     }
 
     $_SESSION['customer_id'] = $db->lastid;
-    echo json_encode(['status' => 1, 'message' => 'সাইনআপ সফল হয়েছে।']);
+    echo json_encode(['status' => 1, 'message' => 'সাইনআপ সফল হয়েছে।']);
     exit;
 }
 
@@ -200,7 +198,7 @@ if ($action == 'customer_login') {
     $password = isset($_POST['password']) ? (string)$_POST['password'] : '';
 
     if ($identity === '' || $password === '') {
-        echo json_encode(['status' => 0, 'message' => 'ইমেইল/ফোন এবং পাসওয়ার্ড দিন।']);
+        echo json_encode(['status' => 0, 'message' => 'ইমেইল/ফোন এবং পাসওয়ার্ড দিন।']);
         exit;
     }
 
@@ -208,7 +206,7 @@ if ($action == 'customer_login') {
     $rows = $db->getdata("SELECT id, password FROM ledger_name WHERE (email = '$safeIdentity' OR number = '$safeIdentity') AND type = 'cus' ORDER BY id DESC LIMIT 1");
 
     if (empty($rows) || !isset($rows[0]['id'])) {
-        echo json_encode(['status' => 0, 'message' => 'ইমেইল/ফোন অথবা পাসওয়ার্ড ভুল।']);
+        echo json_encode(['status' => 0, 'message' => 'ইমেইল/ফোন অথবা পাসওয়ার্ড ভুল।']);
         exit;
     }
 
@@ -217,12 +215,12 @@ if ($action == 'customer_login') {
     $isPasswordValid = $password === $storedPassword;
 
     if (!$isPasswordValid) {
-        echo json_encode(['status' => 0, 'message' => 'ইমেইল/ফোন অথবা পাসওয়ার্ড ভুল।']);
+        echo json_encode(['status' => 0, 'message' => 'ইমেইল/ফোন অথবা পাসওয়ার্ড ভুল।']);
         exit;
     }
 
     $_SESSION['customer_id'] = (int)$customer['id'];
-    echo json_encode(['status' => 1, 'message' => 'লগইন সফল হয়েছে।']);
+    echo json_encode(['status' => 1, 'message' => 'লগইন সফল হয়েছে।']);
     exit;
 }
 
@@ -318,7 +316,198 @@ if ($action == 'facebook_login') {
 if ($action == 'customer_logout') {
     header('Content-Type: application/json; charset=utf-8');
     unset($_SESSION['customer_id']);
-    echo json_encode(['status' => 1, 'message' => 'লগআউট সফল হয়েছে।']);
+    echo json_encode(['status' => 1, 'message' => 'লগআউট সফল হয়েছে।']);
+    exit;
+}
+
+// Books AJAX filter endpoint
+if ($action == 'books_filter') {
+    header('Content-Type: application/json; charset=utf-8');
+
+    $perPage = 12;
+    $page = isset($_POST['page']) ? max(1, (int)$_POST['page']) : 1;
+    $sort = isset($_POST['sort']) ? trim($_POST['sort']) : 'newest';
+    $subjectIds = isset($_POST['subject_ids']) && $_POST['subject_ids'] !== '' ? array_filter(array_map('intval', explode(',', $_POST['subject_ids']))) : [];
+    $writerIds = isset($_POST['writer_ids']) && $_POST['writer_ids'] !== '' ? array_filter(array_map('intval', explode(',', $_POST['writer_ids']))) : [];
+    $publisherIds = isset($_POST['publisher_ids']) && $_POST['publisher_ids'] !== '' ? array_filter(array_map('intval', explode(',', $_POST['publisher_ids']))) : [];
+    $minPrice = isset($_POST['min_price']) && $_POST['min_price'] !== '' ? (float)$_POST['min_price'] : null;
+    $maxPrice = isset($_POST['max_price']) && $_POST['max_price'] !== '' ? (float)$_POST['max_price'] : null;
+    $searchQuery = isset($_POST['search']) ? trim($_POST['search']) : '';
+
+    $columns = $db->getdata("SHOW COLUMNS FROM product");
+    $fields = [];
+    foreach ($columns as $column) {
+        if (isset($column['Field'])) $fields[] = $column['Field'];
+    }
+    $hasSubjectId = in_array('subject_id', $fields, true);
+    $hasWriterId = in_array('writer_id', $fields, true);
+    $hasPublisherId = in_array('publisher_id', $fields, true);
+    $hasSubject = in_array('subject', $fields, true);
+    $hasWriter = in_array('writer', $fields, true);
+    $hasPublisher = in_array('publisher', $fields, true);
+
+    $subjectColumn = $hasSubjectId ? 'subject_id' : ($hasSubject ? 'subject' : '');
+    $writerColumn = $hasWriterId ? 'writer_id' : ($hasWriter ? 'writer' : '');
+    $publisherColumn = $hasPublisherId ? 'publisher_id' : ($hasPublisher ? 'publisher' : '');
+
+    $whereSql = " AND p.status = 1";
+    if (!empty($subjectIds)) {
+        if ($subjectColumn === 'subject_id') {
+            $whereSql .= " AND p.subject_id IN (" . implode(',', $subjectIds) . ")";
+        } elseif ($subjectColumn === 'subject') {
+            $csvConditions = [];
+            foreach ($subjectIds as $id) $csvConditions[] = "FIND_IN_SET(" . (int)$id . ", p.subject)";
+            if (!empty($csvConditions)) $whereSql .= " AND (" . implode(' OR ', $csvConditions) . ")";
+        }
+    }
+    if (!empty($writerIds)) {
+        if ($writerColumn === 'writer_id') {
+            $whereSql .= " AND p.writer_id IN (" . implode(',', $writerIds) . ")";
+        } elseif ($writerColumn === 'writer') {
+            $csvConditions = [];
+            foreach ($writerIds as $id) $csvConditions[] = "FIND_IN_SET(" . (int)$id . ", p.writer)";
+            if (!empty($csvConditions)) $whereSql .= " AND (" . implode(' OR ', $csvConditions) . ")";
+        }
+    }
+    if (!empty($publisherIds)) {
+        if ($publisherColumn === 'publisher_id') {
+            $whereSql .= " AND p.publisher_id IN (" . implode(',', $publisherIds) . ")";
+        } elseif ($publisherColumn === 'publisher') {
+            $csvConditions = [];
+            foreach ($publisherIds as $id) $csvConditions[] = "FIND_IN_SET(" . (int)$id . ", p.publisher)";
+            if (!empty($csvConditions)) $whereSql .= " AND (" . implode(' OR ', $csvConditions) . ")";
+        }
+    }
+    if ($minPrice !== null) $whereSql .= " AND p.price >= " . (float)$minPrice;
+    if ($maxPrice !== null) $whereSql .= " AND p.price <= " . (float)$maxPrice;
+    if ($searchQuery !== '') {
+        $safeSearch = addslashes($searchQuery);
+        $whereSql .= " AND (p.name LIKE '%{$safeSearch}%' OR p.name_bn LIKE '%{$safeSearch}%' OR p.writer LIKE '%{$safeSearch}%'";
+        if ($writerColumn !== '') $whereSql .= " OR (w.name LIKE '%{$safeSearch}%')";
+        if ($publisherColumn !== '') $whereSql .= " OR (pub.name LIKE '%{$safeSearch}%')";
+        $whereSql .= ")";
+    }
+
+    $orderSql = " ORDER BY p.id DESC";
+    if ($sort === 'oldest') $orderSql = " ORDER BY p.id ASC";
+    elseif ($sort === 'price_asc') $orderSql = " ORDER BY p.price ASC, p.id DESC";
+    elseif ($sort === 'price_desc') $orderSql = " ORDER BY p.price DESC, p.id DESC";
+
+    $joinSql = ($subjectColumn === 'subject_id' ? " LEFT JOIN subject s ON s.id = p.subject_id " : "")
+        . ($subjectColumn === 'subject' ? " LEFT JOIN subject s ON FIND_IN_SET(s.id, p.subject) " : "")
+        . ($writerColumn === 'writer_id' ? " LEFT JOIN writer w ON w.id = p.writer_id " : "")
+        . ($writerColumn === 'writer' ? " LEFT JOIN writer w ON FIND_IN_SET(w.id, p.writer) " : "")
+        . ($publisherColumn === 'publisher_id' ? " LEFT JOIN publisher pub ON pub.id = p.publisher_id " : "")
+        . ($publisherColumn === 'publisher' ? " LEFT JOIN publisher pub ON FIND_IN_SET(pub.id, p.publisher) " : "");
+
+    $countRows = $db->getdata("SELECT COUNT(DISTINCT p.id) as total FROM product p {$joinSql} WHERE p.id > 0 {$whereSql}");
+    $totalProducts = isset($countRows[0]['total']) ? (int)$countRows[0]['total'] : 0;
+    $totalPages = (int)max(1, ceil($totalProducts / $perPage));
+    $page = min($page, $totalPages);
+    $offset = ($page - 1) * $perPage;
+    $start = $totalProducts > 0 ? $offset + 1 : 0;
+    $end = min($offset + $perPage, $totalProducts);
+
+    $products = $db->getdata(
+        "SELECT DISTINCT p.* FROM product p {$joinSql} WHERE p.id > 0 {$whereSql}{$orderSql} LIMIT {$offset}, {$perPage}"
+    );
+
+    
+
+    $productsHtml = '';
+    $paginationHtml = '';
+    $tagsHtml = '';
+
+    if (!empty($products)) {
+        $productsHtml .= '<div class="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">';
+        foreach ($products as $product) {
+            $productsHtml .= $db->products($product);
+        }
+        $productsHtml .= '</div>';
+
+        // Pagination
+        if ($totalPages > 1) {
+            $prevDisabled = $page <= 1;
+            $nextDisabled = $page >= $totalPages;
+            $paginationHtml .= '<nav class="mt-8 flex items-center justify-center gap-1.5" aria-label="Books pagination">';
+            $paginationHtml .= '<button type="button" data-books-page="' . ($page - 1) . '" class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition ' . ($prevDisabled ? 'cursor-not-allowed text-slate-400' : 'text-slate-600 hover:bg-slate-50') . '" ' . ($prevDisabled ? 'disabled' : '') . '>‹</button>';
+
+            $window = 2;
+            $startPage = max(1, $page - $window);
+            $endPage = min($totalPages, $page + $window);
+            if ($startPage > 1) {
+                $paginationHtml .= '<button type="button" data-books-page="1" class="rounded-lg border border-slate-300 px-3.5 py-2 text-sm text-slate-600 transition hover:bg-slate-50">1</button>';
+                if ($startPage > 2) $paginationHtml .= '<span class="px-2 text-slate-400">...</span>';
+            }
+
+            for ($i = $startPage; $i <= $endPage; $i++) {
+                $paginationHtml .= '<button type="button" data-books-page="' . $i . '" class="rounded-lg px-3.5 py-2 text-sm transition ' . ($i === $page ? 'bg-emerald-600 font-bold text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50') . '">' . $i . '</button>';
+            }
+
+            if ($endPage < $totalPages) {
+                if ($endPage < $totalPages - 1) $paginationHtml .= '<span class="px-2 text-slate-400">...</span>';
+                $paginationHtml .= '<button type="button" data-books-page="' . $totalPages . '" class="rounded-lg border border-slate-300 px-3.5 py-2 text-sm text-slate-600 transition hover:bg-slate-50">' . $totalPages . '</button>';
+            }
+
+            $paginationHtml .= '<button type="button" data-books-page="' . ($page + 1) . '" class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition ' . ($nextDisabled ? 'cursor-not-allowed text-slate-400' : 'text-slate-600 hover:bg-slate-50') . '" ' . ($nextDisabled ? 'disabled' : '') . '>›</button>';
+            $paginationHtml .= '</nav>';
+        }
+    } else {
+        $productsHtml .= '<div class="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50 py-16">';
+        $productsHtml .= '<svg class="h-16 w-16 text-slate-300 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>';
+        $productsHtml .= '<h3 class="text-lg font-bold text-slate-700">কোনো বই পাওয়া যায়নি</h3>';
+        $productsHtml .= '<p class="mt-2 text-sm text-slate-500">অন্য ফিল্টার ব্যবহার করে দেখুন</p>';
+        $productsHtml .= '</div>';
+    }
+
+    // Active tags HTML
+    $subjectMap = [];
+    if (!empty($subjectIds)) {
+        $subjectRows = $db->getdata("SELECT id, name FROM subject WHERE id IN (" . implode(',', $subjectIds) . ")");
+        foreach ($subjectRows as $row) $subjectMap[(int)$row['id']] = (string)$row['name'];
+    }
+    $writerMap = [];
+    if (!empty($writerIds)) {
+        $writerRows = $db->getdata("SELECT id, name FROM writer WHERE id IN (" . implode(',', $writerIds) . ")");
+        foreach ($writerRows as $row) $writerMap[(int)$row['id']] = (string)$row['name'];
+    }
+    $publisherMap = [];
+    if (!empty($publisherIds)) {
+        $publisherRows = $db->getdata("SELECT id, name FROM publisher WHERE id IN (" . implode(',', $publisherIds) . ")");
+        foreach ($publisherRows as $row) $publisherMap[(int)$row['id']] = (string)$row['name'];
+    }
+
+    $tagParts = [];
+    foreach ($subjectIds as $id) {
+        if (!isset($subjectMap[$id])) continue;
+        $tagParts[] = '<button type="button" data-remove-filter="subject" data-filter-value="' . $id . '" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition">' . htmlspecialchars($subjectMap[$id], ENT_QUOTES, 'UTF-8') . '<svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
+    }
+    foreach ($writerIds as $id) {
+        if (!isset($writerMap[$id])) continue;
+        $tagParts[] = '<button type="button" data-remove-filter="writer" data-filter-value="' . $id . '" class="inline-flex items-center gap-1.5 rounded-full bg-sky-50 border border-sky-200 px-3 py-1 text-xs font-medium text-sky-700 hover:bg-sky-100 transition">' . htmlspecialchars($writerMap[$id], ENT_QUOTES, 'UTF-8') . '<svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
+    }
+    foreach ($publisherIds as $id) {
+        if (!isset($publisherMap[$id])) continue;
+        $tagParts[] = '<button type="button" data-remove-filter="publisher" data-filter-value="' . $id . '" class="inline-flex items-center gap-1.5 rounded-full bg-violet-50 border border-violet-200 px-3 py-1 text-xs font-medium text-violet-700 hover:bg-violet-100 transition">' . htmlspecialchars($publisherMap[$id], ENT_QUOTES, 'UTF-8') . '<svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
+    }
+    if ($minPrice !== null || $maxPrice !== null) {
+        $tagParts[] = '<button type="button" data-remove-filter="price" data-filter-value="0" class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100 transition">৳' . ($minPrice !== null ? number_format($minPrice, 0) : '0') . ' - ৳' . ($maxPrice !== null ? number_format($maxPrice, 0) : '∞') . '<svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
+    }
+    if (!empty($tagParts)) {
+        $tagsHtml = '<div class="flex flex-wrap items-center gap-2">' . implode('', $tagParts) . '<button type="button" data-clear-filters="1" class="text-xs font-medium text-rose-600 hover:text-rose-700 transition ml-1">Clear All</button></div>';
+    }
+
+    echo json_encode([
+        'status' => 1,
+        'html' => $productsHtml,
+        'pagination' => $paginationHtml,
+        'tags_html' => $tagsHtml,
+        'total' => $totalProducts,
+        'start' => $start,
+        'end' => $end,
+        'page' => $page,
+        'total_pages' => $totalPages,
+    ]);
     exit;
 }
 

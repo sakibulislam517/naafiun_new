@@ -87,6 +87,7 @@
   // ---------- Cart Badge ----------
   function updateCartBadge() {
     const count = getCartCount();
+    const total = getCartTotal();
     const badges = document.querySelectorAll(".cart-badge-count");
     badges.forEach((badge) => {
       badge.textContent = count > 0 ? count : "";
@@ -95,6 +96,15 @@
       badge.classList.add("scale-125");
       setTimeout(() => badge.classList.remove("scale-125"), 200);
     });
+
+    const floatingCount = document.getElementById("floatingCartCount");
+    const floatingTotal = document.getElementById("floatingCartTotal");
+    if (floatingCount) {
+      floatingCount.textContent = String(count);
+    }
+    if (floatingTotal) {
+      floatingTotal.textContent = "৳" + total.toLocaleString("en-IN");
+    }
   }
 
   // ---------- Cart Panel ----------
@@ -161,8 +171,8 @@
     container.innerHTML = cart
       .map(
         (item) => `
-      <div class="flex gap-4 rounded-xl border border-slate-200 bg-white p-3 transition hover:shadow-sm" data-cart-item="${item.id}">
-        <a href="details?slug=${item.id}" class="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+      <div class="flex gap-4 rounded-xl border border-slate-300 bg-white p-3 shadow-sm ring-1 ring-slate-200/70 transition hover:border-emerald-300 hover:ring-emerald-100" data-cart-item="${item.id}">
+        <a href="details?slug=${item.id}" class="h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
           <img src="${item.image}" alt="${item.title}" class="h-full w-full object-cover" loading="lazy" />
         </a>
         <div class="flex min-w-0 flex-1 flex-col">
@@ -173,7 +183,7 @@
             </div>
             <button 
               type="button" 
-              class="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+              class="shrink-0 rounded-lg border border-slate-300 bg-white p-1.5 text-slate-400 hover:border-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
               onclick="window.NaafiunCart.removeFromCart(${item.id})"
               aria-label="Remove item"
             >
@@ -183,19 +193,19 @@
             </button>
           </div>
           <div class="mt-auto flex items-center justify-between">
-            <div class="flex items-center rounded-lg border border-slate-200 bg-white">
+            <div class="flex items-center rounded-lg border border-slate-300 bg-white shadow-sm">
               <button 
                 type="button" 
-                class="px-2.5 py-1.5 text-sm text-slate-600 hover:bg-slate-50 transition"
+                class="px-2.5 py-1.5 text-sm text-slate-600 hover:bg-slate-100 transition"
                 onclick="window.NaafiunCart.updateQty(${item.id}, ${item.qty - 1})"
                 ${item.qty <= 1 ? "disabled style=\"opacity:.4;cursor:not-allowed\"" : ""}
               >
                 −
               </button>
-              <span class="w-8 border-x border-slate-200 px-2 py-1.5 text-center text-xs font-semibold">${item.qty}</span>
+              <span class="w-8 border-x border-slate-300 px-2 py-1.5 text-center text-xs font-semibold">${item.qty}</span>
               <button 
                 type="button" 
-                class="px-2.5 py-1.5 text-sm text-slate-600 hover:bg-slate-50 transition"
+                class="px-2.5 py-1.5 text-sm text-slate-600 hover:bg-slate-100 transition"
                 onclick="window.NaafiunCart.updateQty(${item.id}, ${item.qty + 1})"
               >
                 +
@@ -309,34 +319,48 @@
     payload.append("qty", String(qty));
     payload.append("title", product.title || "");
 
-    const res = await fetch("ajax.php", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-      },
-      body: payload.toString(),
-    });
+    try {
+      const res = await fetch("ajax.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        },
+        body: payload.toString(),
+      });
 
-    if (!res.ok) {
-      throw new Error("Failed to sync cart");
+      if (!res.ok) {
+        throw new Error("Failed to sync cart");
+      }
+
+      const raw = await res.text();
+      if (!raw || !raw.trim()) {
+        return { status: 1, skipped: true };
+      }
+
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch (parseErr) {
+        return { status: 1, skipped: true };
+      }
+
+      if (data && typeof data.status !== "undefined" && Number(data.status) !== 1) {
+        throw new Error((data && data.message) || "Cart add failed");
+      }
+
+      return data || { status: 1, skipped: true };
+    } catch (err) {
+      console.warn("[Cart] Server sync skipped:", err);
+      return { status: 1, skipped: true };
     }
-
-    const data = await res.json();
-    if (!data || Number(data.status) !== 1) {
-      throw new Error((data && data.message) || "Cart add failed");
-    }
-
-    return data;
   }
 
   // ---------- Event Listeners ----------
   function initEventListeners() {
     // Cart trigger button
-    document.querySelectorAll(".cart-trigger").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        openCartPanel();
-      });
+    $(document).on("click", ".cart-trigger", function (e) {
+      e.preventDefault();
+      openCartPanel();
     });
 
     // Close cart overlay
@@ -355,8 +379,8 @@
     });
 
     // Add to cart buttons (delegated)
-    document.addEventListener("click", (e) => {
-      const addBtn = e.target.closest("[data-add-cart]");
+    $(document).on("click", "[data-add-cart]", function (e) {
+      const addBtn = this;
       if (!addBtn) return;
 
       e.preventDefault();
@@ -372,6 +396,15 @@
       // Fetch product from JSON if needed
       async function performAdd() {
         let product = article._productData;
+
+        if (!product && article.dataset && article.dataset.product) {
+          try {
+            product = JSON.parse(article.dataset.product);
+            article._productData = product;
+          } catch (err) {
+            console.warn("[Cart] Failed to parse article product payload", err);
+          }
+        }
 
         // Check global cache first
         if (!product && window._productsCache) {
@@ -404,26 +437,23 @@
 
         // Add to cart after animation starts and ajax success
         setTimeout(async () => {
-          try {
-            await addToCartAjax(product, 1);
-            addToCart(product, 1);
-            showToast(`${product.title} added to cart`, "success");
+          addToCart(product, 1);
+          showToast(`${product.title} added to cart`, "success");
 
-            // Button feedback
-            const originalText = addBtn.textContent;
-            addBtn.textContent = "✓ Added!";
-            addBtn.classList.add("bg-emerald-700");
-            addBtn.disabled = true;
+          // Fire-and-forget server sync (local cart remains source of truth)
+          addToCartAjax(product, 1);
 
-            setTimeout(() => {
-              addBtn.textContent = originalText;
-              addBtn.classList.remove("bg-emerald-700");
-              addBtn.disabled = false;
-            }, 1500);
-          } catch (err) {
-            console.error("[Cart] Add ajax error:", err);
-            showToast("Failed to add item to cart", "error");
-          }
+          // Button feedback
+          const originalText = addBtn.textContent;
+          addBtn.textContent = "✓ Added!";
+          addBtn.classList.add("bg-emerald-700");
+          addBtn.disabled = true;
+
+          setTimeout(() => {
+            addBtn.textContent = originalText;
+            addBtn.classList.remove("bg-emerald-700");
+            addBtn.disabled = false;
+          }, 1500);
         }, 200);
       }
 
@@ -489,31 +519,28 @@
           }
 
           setTimeout(async () => {
-            try {
-              await addToCartAjax(product, qty);
-              addToCart(product, qty);
-              showToast(`${product.title} (x${qty}) added to cart`, "success");
+            addToCart(product, qty);
+            showToast(`${product.title} (x${qty}) added to cart`, "success");
 
-              // Button feedback
-              const originalText = detailAddBtn.textContent;
-              detailAddBtn.innerHTML = `
-                <svg class="inline-block h-4 w-4" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Added!
-              `;
-              detailAddBtn.classList.add("bg-emerald-700");
-              detailAddBtn.disabled = true;
+            // Fire-and-forget server sync
+            addToCartAjax(product, qty);
 
-              setTimeout(() => {
-                detailAddBtn.textContent = originalText;
-                detailAddBtn.classList.remove("bg-emerald-700");
-                detailAddBtn.disabled = false;
-              }, 2000);
-            } catch (err) {
-              console.error("[Cart] Add ajax error:", err);
-              showToast("Failed to add item to cart", "error");
-            }
+            // Button feedback
+            const originalText = detailAddBtn.textContent;
+            detailAddBtn.innerHTML = `
+              <svg class="inline-block h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Added!
+            `;
+            detailAddBtn.classList.add("bg-emerald-700");
+            detailAddBtn.disabled = true;
+
+            setTimeout(() => {
+              detailAddBtn.textContent = originalText;
+              detailAddBtn.classList.remove("bg-emerald-700");
+              detailAddBtn.disabled = false;
+            }, 2000);
           }, 200);
         } catch (err) {
           console.error("[Cart] Error:", err);

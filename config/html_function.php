@@ -32,4 +32,49 @@ trait html_function {
         $icons = $this->icons();
         return isset($icons[$name]) ? $icons[$name] : '';
     }
+    public function book_img($image) {
+        $file = basename((string)$image);
+        $path = __DIR__ . '/assets/images/product/' . $file;
+        return ($file !== '' && file_exists($path)) ? ('assets/images/product/' . $file) : 'assets/images/product/1638727737.jpg';
+    }
+
+    public function products($product){
+        $productsHtml = '';
+        $title = (string)($product['name_bn'] ?: $product['name']);
+        $price = (float)$product['price'];
+        $printedPrice = (float)$product['printed_price'];
+        $originalPrice = $printedPrice > 0 ? $printedPrice : $price;
+        $discountPercent = $originalPrice > 0 ? (int)round((($originalPrice - $price) / $originalPrice) * 100) : 0;
+        $image = $this->book_img($product['image']);
+        $inStock = !isset($product['stock']) || (int)$product['stock'] > 0;
+        $cardProduct = json_encode([
+            'id' => (int)$product['id'],
+            'title' => $title,
+            'slug' => (string)$product['slug'],
+            'price' => $price,
+            'originalPrice' => $originalPrice,
+            'discount' => max(0, $discountPercent),
+            'image' => $image,
+            'inStock' => $inStock,
+            'reviews' => 0
+        ], JSON_UNESCAPED_UNICODE);
+
+        $productsHtml .= '<article class="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-lg hover:border-emerald-200 transition-all duration-300" data-id="' . (int)$product['id'] . '" data-product=\'' . htmlspecialchars($cardProduct, ENT_QUOTES, 'UTF-8') . '\'>';
+        $productsHtml .= '<a href="details?slug=' . urlencode((string)$product['slug']) . '" class="block">';
+        $productsHtml .= '<div class="relative aspect-[3/4] overflow-hidden bg-slate-100">';
+        $productsHtml .= '<img src="' . htmlspecialchars($image, ENT_QUOTES, 'UTF-8') . '" alt="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />';
+        if ($discountPercent > 0) {
+            $productsHtml .= '<span class="absolute left-2 top-2 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-2.5 py-1 text-xs font-bold text-white shadow-lg">-' . $discountPercent . '%</span>';
+        }
+        $productsHtml .= '</div>';
+        $productsHtml .= '<div class="p-3">';
+        $productsHtml .= '<h3 class="line-clamp-2 text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition min-h-[2.5rem]">' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</h3>';
+        $productsHtml .= '<div class="mt-2 flex items-baseline gap-2">';
+        $productsHtml .= '<p class="text-base font-extrabold text-emerald-600">৳' . number_format($price, 0) . '</p>';
+        if ($originalPrice > $price) $productsHtml .= '<p class="text-xs text-slate-400 line-through">৳' . number_format($originalPrice, 0) . '</p>';
+        $productsHtml .= '</div></div></a>';
+        $productsHtml .= '<div class="px-3 pb-3"><button class="w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition" type="button" data-add-cart>কার্টে যোগ করুন</button></div>';
+        $productsHtml .= '</article>';
+        return $productsHtml;
+    }
 }

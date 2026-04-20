@@ -6,7 +6,11 @@
       "Bash(python *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(type *)",
+      "Bash(echo.)",
+      "Bash(del *)",
+      "Bash(dir *)"
     ]
   },
   "$version": 3

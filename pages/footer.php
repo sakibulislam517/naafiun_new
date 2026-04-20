@@ -83,14 +83,14 @@
     </footer>
 
     <!-- Cart Slide-out Panel -->
-    <div id="cartOverlay" class="fixed inset-0 z-[60] hidden bg-slate-900/50 opacity-0 transition-opacity duration-300"></div>
-    <div id="cartPanel" class="fixed inset-y-0 right-0 z-[70] flex w-full max-w-md translate-x-full flex-col bg-white shadow-2xl transition-transform duration-300 ease-out">
-      <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+    <div id="cartOverlay" class="fixed inset-0 z-[60] hidden bg-slate-900/55 opacity-0 backdrop-blur-[2px] transition-opacity duration-300"></div>
+    <div id="cartPanel" class="fixed inset-y-0 right-0 z-[70] flex w-full max-w-md translate-x-full flex-col border-l border-slate-300 bg-slate-50 shadow-[0_24px_50px_-18px_rgba(2,6,23,0.45)] ring-1 ring-slate-200/80 transition-transform duration-300 ease-out">
+      <div class="flex items-center justify-between border-b border-slate-300 bg-white px-6 py-4">
         <div>
           <h2 class="text-lg font-bold text-slate-900">শপিং কার্ট</h2>
           <p class="mt-0.5 text-xs text-slate-500" id="cartItemCount">০টি আইটেম</p>
         </div>
-        <button id="cartCloseBtn" type="button" class="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" aria-label="Close cart">
+        <button id="cartCloseBtn" type="button" class="rounded-xl border border-slate-300 bg-white p-2 text-slate-400 hover:border-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" aria-label="Close cart">
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
             <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
@@ -111,13 +111,13 @@
         </div>
         <div id="cartItemsContainer" class="flex flex-col gap-3"></div>
       </div>
-      <div class="border-t border-slate-200 px-6 py-4">
+      <div class="border-t border-slate-300 bg-white px-6 py-4">
         <div class="flex items-center justify-between">
           <p class="text-sm font-semibold text-slate-700">মোট</p>
           <p class="text-xl font-black text-slate-900" id="cartTotal">৳ ০</p>
         </div>
         <p class="mt-1 text-xs text-slate-500">ডেলিভারি চার্জ আলাদা</p>
-        <a href="checkout" id="cartCheckoutBtn" type="button" class="mt-4 block w-full rounded-xl bg-emerald-600 px-5 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
+        <a href="checkout" id="cartCheckoutBtn" type="button" class="mt-4 block w-full rounded-xl border border-emerald-700 bg-emerald-600 px-5 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
           চেকআউট করুন
         </a>
       </div>
@@ -448,11 +448,27 @@
     <?php endif; ?>
 
     <!-- Cart system -->
-    <script src="js/cart.js" defer></script>
+    <script src="js/cart.js?v=<?php echo @filemtime(__DIR__ . '/../js/cart.js') ?: time(); ?>" defer></script>
     <!-- Home page product renderer -->
     <?php if ($pg === 'home'): ?>
     <script src="js/main.js" defer></script>
     <?php endif; ?>
+
+    <!-- Floating Cart Summary (Desktop) -->
+    <button
+      type="button"
+      class="cart-trigger fixed right-1 top-1/2 z-[55] hidden -translate-y-1/2 overflow-hidden rounded-lg border border-emerald-600 bg-emerald-600 text-white shadow-lg transition hover:bg-emerald-700 lg:block"
+      aria-label="Open cart summary"
+    >
+      <span class="flex items-center justify-center gap-1.5 px-3 py-2">
+        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span id="floatingCartCount" class="text-base font-semibold leading-none">0</span>
+        <span class="text-xs leading-none">Items</span>
+      </span>
+      <span id="floatingCartTotal" class="block bg-white px-3 py-1.5 text-center text-sm font-semibold leading-none text-emerald-600">৳0</span>
+    </button>
 
     <!-- ===== FIXED BOTTOM NAV (Mobile Only) ===== -->
     <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.08)] sm:hidden">
