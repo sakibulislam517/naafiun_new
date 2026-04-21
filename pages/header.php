@@ -386,16 +386,8 @@
       const $searchLoading = $('#searchLoading');
       const $searchNoResults = $('#searchNoResults');
       let debounceTimer = null;
-      let productsCache = [];
       let activeIndex = -1;
       let $suggestionLinks = $();
-
-      // Load products cache
-      $.getJSON('data/products.json')
-        .done(function(data) {
-          productsCache = (data && data.products) ? data.products : [];
-        })
-        .fail(function() {});
 
       function setActiveItem(index) {
         $suggestionLinks.each(function(i, el) {
@@ -423,38 +415,40 @@
         $suggestionsBox.removeClass('hidden');
         activeIndex = -1;
 
-        setTimeout(function() {
-          $searchLoading.addClass('hidden');
+        // Fetch suggestions from AJAX
+        $.ajax({
+          url: 'ajax.php?action=search_suggestions',
+          method: 'POST',
+          dataType: 'json',
+          data: { search: query },
+          success: function(response) {
+            $searchLoading.addClass('hidden');
 
-          const q = query.toLowerCase();
-          const matched = productsCache.filter(function(p) {
-            return p.title.toLowerCase().includes(q) ||
-              p.author.toLowerCase().includes(q) ||
-              p.category.toLowerCase().includes(q) ||
-              p.publisher.toLowerCase().includes(q);
-          }).slice(0, 6);
+            if (!response.suggestions || response.suggestions.length === 0) {
+              $searchNoResults.removeClass('hidden');
+              return;
+            }
 
-          if (matched.length === 0) {
+            const html = response.suggestions.map(function(p) {
+              return `
+                <a href="books?search=${encodeURIComponent(query)}" class="suggestion-link flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition border-l-2 border-transparent">
+                  <img src="<?php echo domain;?>assets/images/product/${p.image}" alt="${p.name}" class="h-12 w-9 rounded-lg bg-slate-100 object-cover shrink-0" />
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold text-slate-900 truncate">${p.name}</p>
+                    <p class="text-xs text-slate-500 truncate">৳ ${p.price.toLocaleString('bn-BD')}</p>
+                  </div>
+                </a>
+              `;
+            }).join('');
+
+            $searchResults.html(html);
+            $suggestionLinks = $searchResults.find('.suggestion-link');
+          },
+          error: function() {
+            $searchLoading.addClass('hidden');
             $searchNoResults.removeClass('hidden');
-            return;
           }
-
-          const html = matched.map(function(p) {
-            return `
-              <a href="details?slug=${p.slug}" class="suggestion-link flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition border-l-2 border-transparent">
-                <img src="${p.image}" alt="${p.title}" class="h-12 w-9 rounded-lg bg-slate-100 object-cover shrink-0" />
-                <div class="min-w-0 flex-1">
-                  <p class="text-sm font-semibold text-slate-900 truncate">${p.title}</p>
-                  <p class="text-xs text-slate-500 truncate">${p.author} • ${p.category}</p>
-                </div>
-                <p class="text-sm font-bold text-emerald-600 shrink-0">৳ ${p.price.toLocaleString('bn-BD')}</p>
-              </a>
-            `;
-          }).join('');
-
-          $searchResults.html(html);
-          $suggestionLinks = $searchResults.find('.suggestion-link');
-        }, 200);
+        });
       }
 
       if ($searchInput.length) {

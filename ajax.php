@@ -382,7 +382,7 @@ if ($action == 'books_filter') {
     if ($maxPrice !== null) $whereSql .= " AND p.price <= " . (float)$maxPrice;
     if ($searchQuery !== '') {
         $safeSearch = addslashes($searchQuery);
-        $whereSql .= " AND (p.name LIKE '%{$safeSearch}%' OR p.name_bn LIKE '%{$safeSearch}%' OR p.writer LIKE '%{$safeSearch}%'";
+        $whereSql .= " AND (p.name LIKE '%{$safeSearch}%' OR p.name_bn LIKE '%{$safeSearch}%'";
         if ($writerColumn !== '') $whereSql .= " OR (w.name LIKE '%{$safeSearch}%')";
         if ($publisherColumn !== '') $whereSql .= " OR (pub.name LIKE '%{$safeSearch}%')";
         $whereSql .= ")";
@@ -399,7 +399,6 @@ if ($action == 'books_filter') {
         . ($writerColumn === 'writer' ? " LEFT JOIN writer w ON FIND_IN_SET(w.id, p.writer) " : "")
         . ($publisherColumn === 'publisher_id' ? " LEFT JOIN publisher pub ON pub.id = p.publisher_id " : "")
         . ($publisherColumn === 'publisher' ? " LEFT JOIN publisher pub ON FIND_IN_SET(pub.id, p.publisher) " : "");
-
     $countRows = $db->getdata("SELECT COUNT(DISTINCT p.id) as total FROM product p {$joinSql} WHERE p.id > 0 {$whereSql}");
     $totalProducts = isset($countRows[0]['total']) ? (int)$countRows[0]['total'] : 0;
     $totalPages = (int)max(1, ceil($totalProducts / $perPage));
@@ -407,7 +406,6 @@ if ($action == 'books_filter') {
     $offset = ($page - 1) * $perPage;
     $start = $totalProducts > 0 ? $offset + 1 : 0;
     $end = min($offset + $perPage, $totalProducts);
-
     $products = $db->getdata(
         "SELECT DISTINCT p.* FROM product p {$joinSql} WHERE p.id > 0 {$whereSql}{$orderSql} LIMIT {$offset}, {$perPage}"
     );
@@ -508,6 +506,38 @@ if ($action == 'books_filter') {
         'page' => $page,
         'total_pages' => $totalPages,
     ]);
+    exit;
+}
+
+if ($action == 'search_suggestions') {
+    header('Content-Type: application/json; charset=utf-8');
+    
+    $search = isset($_POST['search']) ? trim($_POST['search']) : '';
+    
+    if (strlen($search) < 2) {
+        echo json_encode(['suggestions' => []]);
+        exit;
+    }
+    
+    $safeSearch = addslashes($search);
+    $sql = "select * from product where name like '%{$safeSearch}%' or name_bn like '%{$safeSearch}%' or slug like '%{$safeSearch}%' limit 8";
+    
+    $products = $db->getdata($sql);
+    
+    $suggestions = [];
+    if (!empty($products)) {
+        foreach ($products as $product) {
+            $suggestions[] = [
+                'id' => (int)$product['id'],
+                'name' => htmlspecialchars((string)($product['name_bn'] ?? ''), ENT_QUOTES, 'UTF-8'),
+                'slug' => htmlspecialchars((string)($product['slug'] ?? ''), ENT_QUOTES, 'UTF-8'),
+                'price' => (float)$product['price'],
+                'image' => htmlspecialchars((string)($product['image'] ?? ''), ENT_QUOTES, 'UTF-8')
+            ];
+        }
+    }
+    
+    echo json_encode(['suggestions' => $suggestions]);
     exit;
 }
 

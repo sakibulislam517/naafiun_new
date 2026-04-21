@@ -2,7 +2,7 @@
 function csv_to_int_array($value) {
     $parts = array_filter(array_map('trim', explode(',', (string)$value)));
     return array_values(array_filter(array_map('intval', $parts)));
-}
+} 
 
 $selectedSubjects = isset($_GET['subject_ids']) ? csv_to_int_array($_GET['subject_ids']) : [];
 $selectedWriters = isset($_GET['writer_ids']) ? csv_to_int_array($_GET['writer_ids']) : [];
